@@ -84,6 +84,7 @@ def init_candidates(sudoku):
                 except KeyError:
                     pass
             sudoku.candidates[row][col] = c
+            print("(%d, %d) Set candidates: %s" % (row, col, str(c)))
 
 
 def solve_naked_singles(sudoku):
@@ -95,6 +96,36 @@ def solve_naked_singles(sudoku):
             for val in c:
                 sudoku[row][col] = val
                 break
+
+
+def solve_naked_singles_at(sudoku, coords):
+    for row, col in coords:
+        c = sudoku.candidates[row][col]
+        if len(c) == 1:
+            # for rationale see:
+            # https://stackoverflow.com/questions/59825/how-to-retrieve-an-element-from-a-set-without-removing-it
+            for val in c:
+                break
+            sudoku[row][col] = val
+
+            for i, j in coord.surrounding(row, col, include=False):
+                try:
+                    sudoku.candidates[row][col].remove(val)
+                except:
+                    pass
+
+
+def solve_naked_n(sudoku, n=2):
+    # we work through rows, cols and quads in 3 steps, since the
+    # empty fields can changed in-between
+    for func in coord.row, coord.col, coord.quad:
+        clist = []
+        for (i, j) in sudoku.empty:
+            coords = func(i, j)
+            if coords not in clist:
+                clist.append(coords)
+        for coords in clist:
+            solve_naked_n_at(sudoku, coords, n=n)
 
 
 def solve_naked_n_at(sudoku, coords, n=2):
@@ -115,6 +146,8 @@ def solve_naked_n_at(sudoku, coords, n=2):
             for (row, col) in coords:
                 if (row, col) not in fields:
                     sudoku.candidates[row][col] -= all_candidates # APPLY
+                    print("(%d, %d) Remove candidates: %s" % (
+                        row, col, str(all_candidates)))
 
 
 def solve_hidden_singles(sudoku):
@@ -155,7 +188,7 @@ def solve_hidden_n(sudoku, n=2):
         clist = []
         for (i, j) in sudoku.empty:
             coords = func(i, j)
-            if coords not in l:
+            if coords not in clist:
                 clist.append(coords)
         for coords in clist:
             solve_hidden_n_at(sudoku, coords, n=n)
@@ -186,6 +219,27 @@ def solve_hidden_n_at(sudoku, coords, n=2):
                 sudoku.candidates[row][col] &= numbers
 
 
+def solve(sudoku):
+    init_candidates(sudoku)
+
+    empty = sudoku.empty
+    empty_len = len(empty)
+
+    while empty:
+        solve_naked_singles(sudoku)
+        solve_hidden_singles(sudoku)
+        for n in range(2, 5):
+            solve_naked_n(sudoku, n)
+            solve_hidden_n(sudoku, n)
+
+        empty = sudoku.empty
+        if len(empty) == empty_len:
+            print("No more solutions...")
+            return
+        else:
+            empty_len = len(empty)
+
+
 if __name__ == '__main__':
     from printing import pretty_str
 
@@ -213,6 +267,18 @@ if __name__ == '__main__':
     000080937
     """
 
+    s3 = """
+    010002000
+    090060058
+    007050200
+    400000000
+    026070140
+    000000003
+    002090600
+    750010020
+    000800090
+    """
+
     # sudoku = Sudoku.from_str(s)
     # init_candidates(sudoku)
     # print(pretty_str(sudoku))
@@ -226,15 +292,20 @@ if __name__ == '__main__':
     # sys.exit(0)
 
     # triple
-    sudoku2 = Sudoku.from_str(s2, empty='.')
-    init_candidates(sudoku2)
+    # sudoku2 = Sudoku.from_str(s2, empty='.')
+    # init_candidates(sudoku2)
 
-    for row, col in coord.quad(8, 0):
-        print(sudoku2[row][col])
+    # for row, col in coord.quad(8, 0):
+        # print(sudoku2[row][col])
 
-    print(pretty_str(sudoku2))
-    solve_hidden_n_at(sudoku2, coord.quad(8, 0), n=3)
-    print("")
-    print("###")
-    print("")
-    print(pretty_str(sudoku2))
+    # print(pretty_str(sudoku2))
+    # solve_hidden_n_at(sudoku2, coord.quad(8, 0), n=3)
+    # print("")
+    # print("###")
+    # print("")
+    # print(pretty_str(sudoku2))
+
+    sudoku = Sudoku.from_str(s3)
+    print(pretty_str(sudoku))
+    solve(sudoku)
+    print(pretty_str(sudoku))
