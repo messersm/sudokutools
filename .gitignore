@@ -105,3 +105,6 @@ ENV/
 
 # ignore development directory
 devel/
+
+# setup.py
+MANIFEST

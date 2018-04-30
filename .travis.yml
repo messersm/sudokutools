@@ -1,0 +1,22 @@
+language: python
+python:
+- '2.6'
+- '2.7'
+- '3.2'
+- '3.3'
+- '3.4'
+- '3.5'
+install:
+- pip install coveralls
+- pip install 'coverage<4'
+script: nosetests --with-doctest --with-coverage --cover-package=sudokutools
+after_success: coveralls
+deploy:
+  provider: pypi
+  user: messersm
+  password:
+    secure: sNGXqKJHBKDFJfs1MmjHExaU2UUv//ZaIX2Y/GLdz2NoMJuE2MAt9h3eWpeul8TSqAQTKw+t4o7oUubR5U32vWEd9kogEvbmDGIjA1Gu/Z3cNSLDbbVR2GT8Ktl5lsz47GmV8HZIh9IK1Z5WKS4SJnZiEvGWEi5I1XfPtWj0mWsxGiO/QcuEAkoiP+hV7SMLl8CEGCO5Bt3NXvw/jDQFsbQiGX9LsIZQRpRCodNe9Wv5of/Ly/Hou9/LwPx/LOYVv+dmeHiGbTK9HqmkizccJ1Z1EH/VjSw9YcKka+McWjl4jgmus/22jU82mA4pGooWd12Egp6fj1ODgNkZs3p/aZCMjw7pZLKBV/WS1HGWfOO145xQ72AvPgyzucaVHdChHZoMzjjLkM+lsNPbuO1cbdvrGuIRmkeBcgyeRMEJ7rku0N3zCgqkgWGstFlLi72WZ+GJk5JpSevA4P9BXba+XYno0SMrl4vfCDpsFE8byBtKhUsirdaFd0URi9AW15gBdpiIS/RPRvlvm3pWaHWz2bIGkgTE+CyEDuKokAHCa0c0MX9b6PV5+PkLH9CDvlZIFz0QF7IIltArP3d7kP7N7zn7INw0E2kAp5AJotA9IHWZT/5KMIJGAVWggvghiovvVhg2CImJlQ6NbOsI7NTJrs/7vyDssbVuJI+3tR4aJ4o=
+  on:
+    tags: true
+    distributions: sdist bdist_wheel
+    repo: messersm/sudokutools
