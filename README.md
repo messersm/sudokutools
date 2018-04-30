@@ -19,6 +19,11 @@
 sudokutools is a collection of functions and classes, which enable you
 to read, create, analyze, solve and print sudokus.
 
+## Installation
+sudokutools is available via pypi, so ``pip install sudokutools`` is all you
+need. From version 0.1.1 tests are included, which can be run via
+``python -m unittest discover sudokutools -v``.
+
 ## Documentation
 You can find the library documentation on readthedocs: <http://sudokutools.readthedocs.io>.
 
@@ -142,7 +147,12 @@ There's much more that you can do, so be sure to check out the documentation.
 * Commandline interface to sudokutools
 * Creating sudokus from pattern templates (like the one at the top of the README)
 
-### Version 0.1 (current)
+### Version 0.1.1 (current)
+#### Changes:
+ * Added tests to pypi package.
+ * Minor additional packaging changes.
+
+### Version 0.1
 #### Features:
 * Parsing and printing sudokus
 * Solving using bruteforce
