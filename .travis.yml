@@ -19,3 +19,8 @@ deploy:
     tags: true
     distributions: sdist bdist_wheel
     repo: messersm/sudokutools
+
+# Work around broken deployment, see:
+# https://github.com/travis-ci/travis-ci/issues/9303
+edge:
+  branch: v1.8.45
