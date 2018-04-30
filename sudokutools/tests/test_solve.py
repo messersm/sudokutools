@@ -121,42 +121,36 @@ CANDIDATES_EXAMPLE = """
 
 class BruteforceTests(TestCase):
     def test_examples(self):
-        """Bruteforce solves the unique examples above.
-        Running bruteforce in reverse still solves the examples above.
-        """
-        for example, solution in SOLVE_EXAMPLES:
-            sudoku = Sudoku.decode(example)
-            sol1 = bruteforce(sudoku)
-            sol2 = bruteforce(sudoku, reverse=True)
+        """Bruteforce solves the given examples."""
+        for example_str, solution_str in SOLVE_EXAMPLES:
+            example = Sudoku.decode(example_str)
+            solution = Sudoku.decode(solution_str)
+            bruteforced_solution = bruteforce(example, reverse=False)
+            self.assertEqual(bruteforced_solution, solution)
 
-            for c in "\n\t ":
-                solution = solution.replace(c, '')
-            self.assertEqual(sol1.encode(), solution)
-            self.assertEqual(sol2.encode(), solution)
+    def test_reverse_examples(self):
+        """Reverse bruteforce still solves the given examples."""
+        for example_str, solution_str in SOLVE_EXAMPLES:
+            example = Sudoku.decode(example_str)
+            solution = Sudoku.decode(solution_str)
+            bruteforced_solution = bruteforce(example, reverse=True)
+            self.assertEqual(bruteforced_solution, solution)
 
     def test_returns_solution(self):
-        """If bruteforce solves a sudoku, it returns the solution.
-        However: bruteforce may or may not solve a sudoku,
-        which already has conflicts!
-        """
+        """If bruteforce solves a sudoku, it returns the solution."""
         sudoku = Sudoku.decode(SOLVE_EXAMPLES[0][0])
         solution = bruteforce(sudoku)
         self.assertNotEqual(solution, None)
         self.assertEqual(len(solution), 81)
 
     def test_returns_false(self):
-        """Bruteforce doesn't solve a sudoku, which cannot be solved.
-        If bruteforce doesn't solve a sudoku it returns None.
-        """
-
+        """Bruteforce returns None, if a sudoku cannot be solved."""
         sudoku = Sudoku.decode(SOLVE_EXAMPLES[0][0])
         sudoku[0, 0] = 5
         self.assertEqual(bruteforce(sudoku), None)
 
     def test_reverse_on_non_unique(self):
-        """Running bruteforce in reverse order, produces another solution
-        on non-unique sudokus.
-        """
+        """Reverse bruteforce returns another solution on non-unique sudokus."""
         sudoku = Sudoku.decode(NON_UNIQUE)
         sol1 = bruteforce(sudoku, reverse=False)
         sol2 = bruteforce(sudoku, reverse=True)
@@ -165,11 +159,7 @@ class BruteforceTests(TestCase):
 
 class CandidatesTest(TestCase):
     def test_calc_candidates_in_example(self):
-        """
-
-        Returns:
-
-        """
+        """Candidates in the given examples are calculated correctly."""
         sudoku1 = Sudoku.decode(CANDIDATES_EXAMPLE)
         sudoku2 = sudoku1.copy(include_candidates=False)
 
@@ -179,6 +169,7 @@ class CandidatesTest(TestCase):
             self.assertEqual(sudoku1.get_candidates(row, col), candidates)
 
     def test_init_candidates(self):
+        """Candidates in the given sudoku are calculated correctly."""
         sudoku1 = Sudoku.decode(CANDIDATES_EXAMPLE)
         sudoku2 = sudoku1.copy()
         init_candidates(sudoku2)
@@ -190,14 +181,11 @@ class CandidatesTest(TestCase):
 
 class AnalyzeTests(TestCase):
     def setUp(self):
-        """Makes sure, the example above is solvable."""
+        """The example provided by this unittest is solvable."""
         self.assertNotEqual(bruteforce(Sudoku.decode(CONFLICT_EXAMPLE)), None)
 
     def test_find_conflicts_at(self):
-        """The above example has no conflicts at (1, 2).
-        Putting a 1 at (1, 2) creates a conflict at (1, 8) and (2, 2)
-        and no other.
-        """
+        """Conflicts at certain coordinates in a given example are found."""
         sudoku = Sudoku.decode(CONFLICT_EXAMPLE)
         self.assertEqual(list(find_conflicts(sudoku, (1, 2))), [])
 
@@ -209,19 +197,17 @@ class AnalyzeTests(TestCase):
         self.assertRaises(StopIteration, next, conflicts)
 
     def test_find_conflicts(self):
-        """The above example has no conflicts.
-        """
+        """If a sudoku has no conflicts, none are found."""
         sudoku = Sudoku.decode(CONFLICT_EXAMPLE)
         self.assertEqual(list(find_conflicts(sudoku)), [])
 
     def test_unique(self):
-        """Every sudoku in SOLVE_EXAMPLES is unique.
-        NON_UNIQUE is not unique.
-        """
-
+        """If a sudoku is unique, it is evaluated as unique."""
         for example, solution in SOLVE_EXAMPLES:
             sudoku = Sudoku.decode(example)
             self.assertEqual(is_unique(sudoku), True)
 
+    def test_non_unique(self):
+        """If a sudoku is not unique, it is evaluated as non-unique."""
         sudoku = Sudoku.decode(NON_UNIQUE)
         self.assertEqual(is_unique(sudoku), False)

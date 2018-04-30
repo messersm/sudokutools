@@ -68,15 +68,15 @@ CANDIDATES_EXAMPLE = """
 
 class SudokuTests(TestCase):
     def test_init(self):
-        """A new sudoku consists of 81 zeros and no candidates.
-        """
+        """A new sudoku consists of 81 zeros and no candidates."""
         sudoku = Sudoku()
 
         for row, col in product(range(9), repeat=2):
             self.assertEqual(sudoku[row, col], 0)
             self.assertEqual(sudoku.get_candidates(row, col), set())
 
-    def test_decode(self):
+    def test_decode_valid(self):
+        """A sudoku is decoded correctly from a valid string."""
         sudoku = Sudoku.decode(EXAMPLE)
 
         row = 0
@@ -91,6 +91,7 @@ class SudokuTests(TestCase):
                     col = 0
 
     def test_decode_candidates(self):
+        """A sudoku with candidates is decoded correctly from a valid string."""
         sudoku = Sudoku.decode(CANDIDATES_EXAMPLE)
         self.assertEqual(sudoku.get_candidates(0, 1), {4, 5, 7, 8})
 
@@ -98,28 +99,34 @@ class SudokuTests(TestCase):
             self.assertNotEqual(sudoku.get_candidates(row, col), {})
 
     def test_encode(self):
+        """A sudoku is encoded to a valid string."""
         s = EXAMPLE.replace('\n', '')
         sudoku = Sudoku.decode(EXAMPLE)
         self.assertEqual(sudoku.encode(include_candidates=False), s)
 
     def test_str(self):
+        """str(sudoku) returns a correct human readable string."""
         sudoku = Sudoku.decode(EXAMPLE)
         self.assertEqual(str(sudoku), EXAMPLE_STR)
 
-    def test_empty(self):
-        """A new sudoku has 81 empty fields.
-        If you set one field in this sudoku it has 80 empty fields.
-        The empty() method confirms the empty fields stated in EMPTY.
-        """
+    def test_empty_fields_in_new_sudoku(self):
+        """A new sudoku has 81 empty fields."""
         sudoku = Sudoku()
         self.assertEqual(len(list(sudoku.empty())), 81)
+
+    def test_empty_fields_in_changed_sudoku(self):
+        """If we set one field in a new sudoku it has 80 empty fields."""
+        sudoku = Sudoku()
         sudoku[0, 0] = 4
         self.assertEqual(len(list(sudoku.empty())), 80)
 
+    def test_empty_example(self):
+        """empty() confirms the empty fields in a given example."""
         sudoku = Sudoku.decode(EXAMPLE)
         self.assertEqual(list(sudoku.empty()), EMPTY)
 
     def test_diff(self):
+        """diff() confirms the differences between to given examples."""
         sudoku1 = Sudoku.decode(EXAMPLE)
         sudoku2 = Sudoku.decode(EXAMPLE)
 
@@ -132,24 +139,27 @@ class SudokuTests(TestCase):
         self.assertRaises(StopIteration, next, diff)
 
     def test_equal(self):
-        """Two sudokus with the same numbers are equal.
-        This is independent of their candidates.
-        Changing a number in one of these sudokus makes them not-equal.
-        """
+        """Two sudokus from the same string are equal."""
         sudoku1 = Sudoku.decode(EXAMPLE)
-        sudoku2 = sudoku1.copy()
-        sudoku1.set_candidates(0, 0, {3, 4})
-
+        sudoku2 = Sudoku.decode(EXAMPLE)
         self.assertEqual(sudoku1, sudoku2)
+
+    def test_equal_independent_from_candidates(self):
+        """Two sudokus are equal independent of the candidates they have."""
+        sudoku1 = Sudoku.decode(EXAMPLE)
+        sudoku2 = Sudoku.decode(EXAMPLE)
+        sudoku1.set_candidates(0, 0, {3, 4})
+        self.assertEqual(sudoku1, sudoku2)
+
+    def test_unequal_after_change(self):
+        """Changing a number in one of two equal sudokus, makes them unequal."""
+        sudoku1 = Sudoku.decode(EXAMPLE)
+        sudoku2 = Sudoku.decode(EXAMPLE)
         sudoku1[2, 3] -= 1
         self.assertNotEqual(sudoku1, sudoku2)
-        self.assertNotEqual(sudoku1, None)
 
     def test_equal_type(self):
-        """Sudokus are equal to any object, which support [row, col]
-        and return the same value on each row and column.
-        Every other object simply isn't equal.
-        """
+        """If an object returns the same numbers in every field, it's equal."""
         sudoku = Sudoku.decode(EXAMPLE)
 
         d = {}
@@ -159,24 +169,29 @@ class SudokuTests(TestCase):
         self.assertEqual(sudoku, d)
         d[0, 0] -= 1
 
+    def test_unequal_type(self):
+        """If an object doesn't return the same numbers, it's unequal."""
+        sudoku = Sudoku.decode(EXAMPLE)
+
+        d = {}
+        for row, col in product(INDICES, repeat=2):
+            d[row, col] = sudoku[row, col]
+
+        d[0, 0] -= 1
+
         self.assertNotEqual(sudoku, d)
         self.assertNotEqual(sudoku, None)
         self.assertNotEqual(sudoku, 3)
         self.assertNotEqual(sudoku, {})
 
-    def test_get_candidates(self):
-        """If we get the candidates of a field
-        we cannot change the returned set.
-        """
+    def test_candidates_are_frozenset(self):
+        """The candidates of a field are a frozenset."""
         sudoku = Sudoku()
         c = sudoku.get_candidates(0, 0)
         self.assertIsInstance(c, frozenset)
 
-    def test_set_candidates(self):
-        """If we set the candidates of a field to a given set
-        and change this set later on, the candidates in the field
-        should not change.
-        """
+    def test_cannot_candidates_from_outside(self):
+        """The candidates of a field cannot be changed outside from Sudoku."""
         sudoku = Sudoku()
         a = {3, 2, 1}
         b = set(a)
@@ -187,6 +202,7 @@ class SudokuTests(TestCase):
 
 class CoordTests(TestCase):
     def test_row_of(self):
+        """row_of() returns all fields of a row and no other."""
         for row, col in product(INDICES, repeat=2):
             coords = row_of(row, col, include=True)
             self.assertEqual(len(coords), len(NUMBERS))
@@ -199,6 +215,7 @@ class CoordTests(TestCase):
             self.assertNotIn((row, col), coords)
 
     def test_column_of(self):
+        """column_of() returns all fields of a column and no other."""
         for row, col in product(INDICES, repeat=2):
             coords = column_of(row, col, include=True)
             self.assertEqual(len(coords), len(NUMBERS))
@@ -210,7 +227,8 @@ class CoordTests(TestCase):
             self.assertEqual(len(coords), len(NUMBERS)-1)
             self.assertNotIn((row, col), coords)
 
-    def test_quad_of(self):
+    def test_square_of(self):
+        """square_of() returns all fields of a square and no other."""
         for row, col in product(INDICES, repeat=2):
             coords = square_of(row, col, include=True)
             self.assertEqual(len(coords), len(NUMBERS))
@@ -225,6 +243,7 @@ class CoordTests(TestCase):
             self.assertNotIn((row, col), coords)
 
     def test_surrounding_of(self):
+        """surrounding_of() returns all surrounding fields and no other."""
         for row, col in product(INDICES, repeat=2):
             coords = surrounding_of(row, col, include=True)
             self.assertEqual(len(coords), 9 + 6 + 6)
