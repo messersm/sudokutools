@@ -4,11 +4,14 @@ import sudokutools
 
 version = sudokutools.__version__
 description = sudokutools.__doc__.split('\n')[0]
-long_description = sudokutools.__doc__
+
+with open('README.md') as f:
+    long_description = f.read()
 
 setup(
     name = 'sudokutools',
-    packages = ['sudokutools'],
+    packages = ['sudokutools', 'sudokutools.tests'],
+
     version = version,
     description = description,
     long_description=long_description,
@@ -21,7 +24,6 @@ setup(
     classifiers = [
         'Development Status :: 3 - Alpha',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.3',
