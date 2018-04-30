@@ -1,11 +1,11 @@
-"""Low-level solving and checking of sudokus
+"""Low-level solving and checking of sudokus.
 
 Functions defined here:
- * bruteforce: Solves a sudoku using brute force.
- * calc_candidates: Calculates candidates of a field in a sudoku.
- * init_candidates: Sets the candidates for all fields in a sudoku.
- * find_conflicts: Check sudoku for conflicting fields.
- * is_unique: Check if a sudoku has exactly one solution.
+ * bruteforce(): Solves a sudoku using brute force.
+ * calc_candidates(): Calculates candidates of a field in a sudoku.
+ * init_candidates(): Sets the candidates for all fields in a sudoku.
+ * find_conflicts(): Check sudoku for conflicting fields.
+ * is_unique(): Check if a sudoku has exactly one solution.
 """
 
 from itertools import product

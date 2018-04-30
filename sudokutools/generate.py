@@ -1,3 +1,10 @@
+"""Create new sudokus.
+
+Functions defined here:
+ * create_solution(): Create a complete sudoku without conflicts.
+ * generate(): Create a new sudoku.
+"""
+
 from itertools import product
 from random import shuffle
 

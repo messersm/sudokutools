@@ -1,13 +1,13 @@
-"""Module providing a Sudoku class for parsing, printing, etc.
+"""Parse, print and compare sudokus.
 
 Classes defined here:
  * Sudoku: Represents a sudoku.
 
 Functions defined here:
- * column_of: Returns all coordinates in the column of a given field.
- * row_of: Returns all coordinates in the row of a given field.
- * square_of: Returns all coordinates in the square of a given field.
- * surrounding_of: Returns all surrounding coordinates of a given field.
+ * column_of(): Returns all coordinates in the column of a given field.
+ * row_of(): Returns all coordinates in the row of a given field.
+ * square_of(): Returns all coordinates in the square of a given field.
+ * surrounding_of(): Returns all surrounding coordinates of a given field.
 """
 
 from itertools import product
@@ -286,19 +286,19 @@ class Sudoku(object):
         newlines for better readability.
 
         Each number represents the value of a column. If a row is full, we
-        continue in the next one. So the sudoku above looks like this:
+        continue in the next one. So the sudoku above looks like this::
 
-              |   3   |
-            5 |     9 | 6   2
-            8 |     4 |   1 3
-        ------+-------+------
-          2   |   6   |
-        7   3 |   4   | 1   6
-              |   8   |   9
-        ------+-------+------
-        2 1   | 3     | 8
-        3   6 | 8     | 7
-              |   2   |
+                  |   3   |
+                5 |     9 | 6   2
+                8 |     4 |   1 3
+            ------+-------+------
+              2   |   6   |
+            7   3 |   4   | 1   6
+                  |   8   |   9
+            ------+-------+------
+            2 1   | 3     | 8
+            3   6 | 8     | 7
+                  |   2   |
 
         The second string additionally defines candidates. Each set
         of candidates is separated by ',' so the string above defines the
