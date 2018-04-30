@@ -106,3 +106,72 @@ def generate(min_count=17, symmetry=None):
                 count += 1
 
     return sudoku
+
+
+def generate_from_template(template, tries=100):
+    """Create a new sudoku from a given template.
+
+    Args:
+        template (Sudoku): A sudoku, which describes the pattern to use.
+                           Every non-zero value of the template will be
+                           a filled field in the created solution.
+        tries (int): The number of tries until we give up. If
+                     tries < 0, the function will run, until a solution is
+                     found. Take note, that this may deadlock your program,
+                     if a solution is not possible. If tries == 0, None
+                     will be returned (since we didn't try).
+
+    Returns:
+        Sudoku or None: The created sudoku or None, if we couldn't find
+                        a solution within the given number of tries.
+
+    So symmetry isn't enough for you and you want your sudokus
+    to look like your favorite animal? Then this function is for you!
+    generate_from_template takes the pattern from template and returns
+    a valid sudoku, which matches this pattern (if possible).
+
+    Creating sudokus from templates is done in two steps:
+     1. Create a template (Sudoku) from the template string.
+     2. Hand over this template to this function.
+
+    Example for a template string::
+
+        111111111
+        100000001
+        100000001
+        100111001
+        100111001
+        100111001
+        100000001
+        100000001
+        111111111
+
+    Will create a sudoku like this::
+
+        1 2 6 | 9 4 8 | 3 7 5
+        7     |       |     4
+        3     |       |     6
+        ------+-------+------
+        9     | 8 1 2 |     3
+        5     | 3 9 6 |     1
+        2     | 4 5 7 |     8
+        ------+-------+------
+        4     |       |     7
+        8     |       |     2
+        6 3 7 | 1 2 5 | 4 8 9
+
+    """
+    t = 0
+
+    while t < tries or tries < 0:
+        solution = create_solution()
+        sudoku = solution.copy()
+
+        for row, col in product(INDICES, repeat=2):
+            if not template[row, col]:
+                sudoku[row, col] = 0
+
+        if is_unique(sudoku):
+            return sudoku
+        else:
+            t += 1

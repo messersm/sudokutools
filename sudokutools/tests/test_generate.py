@@ -1,7 +1,36 @@
+from itertools import product
 from unittest import TestCase
 
-from sudokutools.generate import generate, create_solution
+from sudokutools.generate import (
+    generate, generate_from_template, create_solution
+)
 from sudokutools.solve import find_conflicts, is_unique
+from sudokutools.sudoku import Sudoku, INDICES
+
+
+TEMPLATE = """
+111111111
+111111111
+100000001
+100111001
+100111001
+100111001
+100000001
+111111111
+111111111
+"""
+
+IMPOSSIBLE_TEMPLATE = """
+000000000
+000000000
+000000000
+000111000
+000111000
+000111000
+000000000
+000000000
+000000000
+"""
 
 
 class CreateSolutionTests(TestCase):
@@ -31,3 +60,25 @@ class GenerateTests(TestCase):
         for i in range(10):
             sudoku = generate(min_count=40)
             self.assertGreaterEqual(len(sudoku), 40)
+
+
+class GenerateFromTemplateTests(TestCase):
+    def test_same_pattern(self):
+        """A sudoku generated from a template has the template's pattern."""
+        template = Sudoku.decode(TEMPLATE)
+        sudoku = generate_from_template(template, tries=-1)
+
+        for row, col in product(INDICES, repeat=2):
+            self.assertEqual(bool(template[row, col]), bool(sudoku[row, col]))
+
+    def test_none_from_impossible_template(self):
+        """None will be generated from an impossible template."""
+        template = Sudoku.decode(IMPOSSIBLE_TEMPLATE)
+        sudoku = generate_from_template(template)
+        self.assertIs(sudoku, None)
+
+    def test_none_from_zero_tries(self):
+        """None will be generated from a template if we don't try."""
+        template = Sudoku.decode(TEMPLATE)
+        sudoku = generate_from_template(template, tries=0)
+        self.assertIs(sudoku, None)
