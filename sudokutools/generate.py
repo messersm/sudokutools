@@ -118,12 +118,14 @@ def generate_from_template(template, tries=100):
         tries (int): The number of tries until we give up. If
                      tries < 0, the function will run, until a solution is
                      found. Take note, that this may deadlock your program,
-                     if a solution is not possible. If tries == 0, None
-                     will be returned (since we didn't try).
+                     if a solution is not possible.
 
     Returns:
-        Sudoku or None: The created sudoku or None, if we couldn't find
-                        a solution within the given number of tries.
+        Sudoku: The created sudoku.
+
+    Raises:
+        RuntimeError: if the sudoku couldn't be created, within the
+                      given number of tries.
 
     So symmetry isn't enough for you and you want your sudokus
     to look like your favorite animal? Then this function is for you!
@@ -159,7 +161,6 @@ def generate_from_template(template, tries=100):
         4     |       |     7
         8     |       |     2
         6 3 7 | 1 2 5 | 4 8 9
-
     """
     t = 0
 
@@ -175,3 +176,6 @@ def generate_from_template(template, tries=100):
             return sudoku
         else:
             t += 1
+
+    raise RuntimeError(
+        "Failed to generate sudoku from template within %d tries." % tries)
