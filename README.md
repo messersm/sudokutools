@@ -19,6 +19,9 @@
 sudokutools is a collection of functions and classes, which enable you
 to read, create, analyze, solve and print sudokus.
 
+## Documentation
+You can find the library documentation on readthedocs: <http://sudokutools.readthedocs.io>.
+
 ## License
 sodukutools is licensed under the MIT-License, which means, you can do pretty
 much everything you want with it. For details see ``LICENSE.txt``.
