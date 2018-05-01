@@ -96,7 +96,7 @@ def _do_bruteforce(sudoku, reverse=False):
         saved_candidates = {(row, col): set(sudoku.get_candidates(row, col))}
         for (i, j) in surrounding_of(row, col, include=False):
             saved_candidates[(i, j)] = set(sudoku.get_candidates(i, j))
-            sudoku.remove_candidates(i, j, candidate)
+            sudoku.remove_candidates(i, j, {candidate})
 
         if _do_bruteforce(sudoku, reverse=reverse):
             return True

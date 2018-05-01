@@ -19,10 +19,18 @@
 sudokutools is a collection of functions and classes, which enable you
 to read, create, analyze, solve and print sudokus.
 
+## Development status
+This software is in Alpha. API changes may occur between minor versions.
+It should however be quiet stable: Right now its functionality is covered
+with 40+ unit tests.
+
 ## Installation
-sudokutools is available via pypi, so ``pip install sudokutools`` is all you
-need. From version 0.1.1 tests are included, which can be run via
-``python -m unittest discover sudokutools -v``.
+sudokutools is available via the Python Package Index (pypi).
+Installing and testing can be done with:
+```
+python -m pip install sudokutools
+python -m unittest discover sudokutools -v 
+```
 
 ## Documentation
 You can find the library documentation on readthedocs: <http://sudokutools.readthedocs.io>.
@@ -140,17 +148,29 @@ There's much more that you can do, so be sure to check out the documentation.
 
 ## Road map and changelog
 
-### Version 0.2 (planned)
+### Version 0.2 (in development)
 #### Features (planned):
 * More printing: print the candidates of sudokus
 * Different solving strategies, which can be used to learn solving sudokus
 * Commandline interface to sudokutools
 * Creating sudokus from pattern templates (like the one at the top of the README)
 
+#### Changes:
+* **API change:** The method signature of ``Sudoku.remove_candidates()`` in
+  the ``sudokutools.sudoku`` module has been changed to be consistent with
+  the signature of ``Sudoku.set_candidates()``:
+
+  ```python
+  Sudoku.remove_candidates(self, row, col, *candidates)
+  Sudoku.remove_candidates(self, row, col, value)
+  ```
+  You have to change your code, if you used ``Sudoku.remove_candidates()``.
+
+
 ### Version 0.1.1 (current)
 #### Changes:
- * Added tests to pypi package.
- * Minor additional packaging changes.
+* Added tests to pypi package.
+* Minor additional packaging changes.
 
 ### Version 0.1
 #### Features:

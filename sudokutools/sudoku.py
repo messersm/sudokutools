@@ -220,7 +220,7 @@ class Sudoku(object):
 
         self.__candidates[row][col] = frozenset(value)
 
-    def remove_candidates(self, row, col, *candidates):
+    def remove_candidates(self, row, col, value):
         """Remove the given candidates in the field at (row, col).
 
         Ignores candidates, which are not present in the field.
@@ -228,9 +228,9 @@ class Sudoku(object):
         Args:
             row (int): The row of the field.
             col (int): The column of the field.
-            candidates (iterable): The candidates to remove.
+            value (iterable): The candidates to remove.
         """
-        self.__candidates[row][col] -= set(candidates)
+        self.__candidates[row][col] -= set(value)
 
     def encode(self, row_sep="", col_sep="", include_candidates=False):
         """Return sudoku as a (machine-readable) string.
