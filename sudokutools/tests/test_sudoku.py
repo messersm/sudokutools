@@ -190,7 +190,7 @@ class SudokuTests(TestCase):
         c = sudoku.get_candidates(0, 0)
         self.assertIsInstance(c, frozenset)
 
-    def test_cannot_candidates_from_outside(self):
+    def test_cannot_change_candidates_from_outside(self):
         """The candidates of a field cannot be changed outside from Sudoku."""
         sudoku = Sudoku()
         a = {3, 2, 1}
@@ -198,6 +198,13 @@ class SudokuTests(TestCase):
         sudoku.set_candidates(0, 0, a)
         a.discard(2)
         self.assertEqual(sudoku.get_candidates(0, 0), b)
+
+    def test_remove_candidates(self):
+        """Removing candidates works"""
+        sudoku = Sudoku()
+        sudoku.set_candidates(0, 0, {1, 2, 3, 4})
+        sudoku.remove_candidates(0, 0, {2, 4})
+        self.assertEqual(sudoku.get_candidates(0, 0), {1, 3})
 
 
 class CoordTests(TestCase):

@@ -4,9 +4,7 @@ import sudokutools
 
 version = sudokutools.__version__
 description = sudokutools.__doc__.split('\n')[0]
-
-with open('README.md') as f:
-    long_description = f.read()
+long_description = sudokutools.__doc__
 
 setup(
     name = 'sudokutools',

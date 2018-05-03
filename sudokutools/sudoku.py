@@ -55,6 +55,7 @@ class Sudoku(object):
     """
 
     def __init__(self):
+        """Create a new empty sudoku."""
         self.__numbers = [[0] * 9 for _ in range(9)]
         self.__candidates = [[frozenset()] * 9 for _ in range(9)]
 
@@ -72,7 +73,7 @@ class Sudoku(object):
         """Iterate through coordinates with different values in other.
 
         Compares each field in other to the corresponding field in
-        self and yield the coordinates, if the number within is
+        self and yields the coordinates, if the number within is
         different.
 
         Args:
@@ -196,6 +197,14 @@ class Sudoku(object):
             if self.__numbers[row][col]:
                 count += 1
         return count
+
+    def get_number(self, row, col):
+        """Same as sudoku[row, col]."""
+        return self[row, col]
+
+    def set_number(self, row, col, value):
+        """Same as sudoku[row, col] = value."""
+        self[row, col] = value
 
     def get_candidates(self, row, col):
         """Return the candidates of the field at (row, col).
