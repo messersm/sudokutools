@@ -1,4 +1,10 @@
 from sudokutools.shell import Shell
 
-if __name__ == '__main__':
+
+def main():
+    """Run the sudokutools shell."""
     Shell().run()
+
+
+if __name__ == '__main__':
+    main()

@@ -1,9 +1,11 @@
+from __future__ import print_function
+
 from ast import literal_eval
 import inspect
 import sys
 
 from sudokutools import __version__
-from sudokutools.generate import generate
+from sudokutools.generate import generate, generate_from_template
 from sudokutools.solve import bruteforce
 from sudokutools.sudoku import Sudoku
 
@@ -93,6 +95,11 @@ def parse(s):
         return func, special_args, args, kwargs
 
 
+def clear():
+    """Clear the terminal screen."""
+    print("\033[H\033[J", end="")
+
+
 class Shell(object):
     def __init__(self, interactive=None):
         # automatically determine, if this is an interactive shell
@@ -113,10 +120,10 @@ class Shell(object):
 
         # some state
         self.sudoku = Sudoku()
-        self.__running = True
+        self.running = True
         self.__loop_n = None
         self.__loop_command_list = []
-        self.__stack = []
+        self.stack = []
 
     def error(self, s):
         sys.stderr.write("Error: %s\n" % s)
@@ -161,7 +168,7 @@ class Shell(object):
             print("sudokutools shell %s" % __version__)
             print("For a list of available command type: help")
 
-        while self.__running:
+        while self.running:
             try:
                 line = input(self.prompt)
                 self.execute_line(line)
@@ -244,39 +251,41 @@ class Shell(object):
 
     def exit_command(self):
         """Exit the sudokutools shell."""
-        self.__running = False
+        self.running = False
 
     def stack_command(self):
         """Show the number of sudokus on the stack."""
-        return "stack has %d sudokus" % len(self.__stack)
+        return "stack has %d sudokus" % len(self.stack)
 
     def push_command(self):
         """Push the current sudoku to the stack."""
-        self.__stack.append(self.sudoku.copy(include_candidates=True))
+        self.stack.append(self.sudoku.copy(include_candidates=True))
 
     def pop_command(self, position=None):
         """Pop the sudoku at 'position' from the stack"""
 
-        if not self.__stack:
+        if not self.stack:
             return self.error("stack is empty")
 
         if position is None:
-            position = len(self.__stack) - 1
+            position = len(self.stack) - 1
         else:
             try:
                 position = int(position)
-                assert 0 <= position < len(self.__stack)
+                assert 0 <= position < len(self.stack)
             except (ValueError, AssertionError):
                 return self.error(
-                    "0 <= position < %d" % len(self.__stack))
+                    "0 <= position < %d" % len(self.stack))
 
-        self.sudoku = self.__stack.pop(position)
+        self.sudoku = self.stack.pop(position)
+
 
 SPECIAL_ARGS = ("sudoku", "shell")
 COMMANDS = {
     # Creating sudokus
     "new": (Sudoku, ),
     "generate": (generate, ),
+    "generate_from_template": (generate_from_template, "sudoku"),
 
     # Changing the current sudoku
     "get": (Sudoku.get_number, "sudoku"),
@@ -288,6 +297,7 @@ COMMANDS = {
     # printing
     "encode": (Sudoku.encode, "sudoku"),
     "print": (Sudoku.__str__, "sudoku"),
+    "clear": (clear, ),
 
     # solving
     "bruteforce": (bruteforce, "sudoku"),
@@ -305,10 +315,10 @@ COMMANDS = {
 
 # helper tuple to define the sections for the help command
 COMMANDS_HELP = (
-    ("Creating sudokus:", ("new", "generate")),
+    ("Creating sudokus:", ("new", "generate", "generate_from_template")),
     ("Setting and getting numbers and candidates:",
         ("get", "set", "get_candidates", "set_candidates", "remove_candidates")),
-    ("Printing:", ("encode", "print")),
+    ("Printing:", ("encode", "print", "clear")),
     ("Solving:", ("bruteforce",)),
     ("Advanced:", ("loop", "stack", "push", "pop")),
     ("Other commands:", ("help", "exit"))

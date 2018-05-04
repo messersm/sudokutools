@@ -8,6 +8,7 @@ python:
 install:
 - pip install coveralls
 - pip install 'coverage<4'
+- pip install setuptools
 script: nosetests --with-doctest --with-coverage --cover-package=sudokutools
 after_success: coveralls
 deploy:

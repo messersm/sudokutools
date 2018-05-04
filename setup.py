@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 
 import sudokutools
 
@@ -9,7 +9,11 @@ long_description = sudokutools.__doc__
 setup(
     name = 'sudokutools',
     packages = ['sudokutools', 'sudokutools.tests'],
-
+    entry_points={
+        'console_scripts': [
+            'sudokutools = sudokutools.__main__:main',
+        ],
+    },
     version = version,
     description = description,
     long_description=long_description,
