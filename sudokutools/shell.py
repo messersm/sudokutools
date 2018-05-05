@@ -101,10 +101,12 @@ def clear():
 
 
 class Shell(object):
-    def __init__(self, interactive=None):
+    def __init__(self, interactive=None, infile=sys.stdin):
         # automatically determine, if this is an interactive shell
+        self.infile = infile
+
         if interactive is None:
-            if sys.stdin.isatty():
+            if self.infile.isatty():
                 self.interactive = True
             else:
                 self.interactive = False
@@ -171,7 +173,23 @@ class Shell(object):
         lines = ""
         while self.running:
             try:
-                line = input(self.prompt)
+                print(self.prompt, end='')
+                line = self.infile.readline()
+            except KeyboardInterrupt:
+                if self.interactive:
+                    print("\nUse 'exit' to leave the shell.")
+                    line = "\n"
+                else:
+                    sys.exit(2)
+
+            try:
+                # readline() doesn't raise EOFError, but
+                # returns an empty line at EOF.
+                if not line:
+                    if self.interactive:
+                        print("")
+                    break
+                line = line.replace('\n', '')
 
                 # remove comments
                 idx = line.find('#')
@@ -191,8 +209,12 @@ class Shell(object):
                     if lines:
                         self.execute_line(lines)
                     lines = ""
-            except EOFError:
-                sys.exit(0)
+            except KeyboardInterrupt:
+                print("")
+
+                if not self.interactive:
+                    sys.exit(2)
+
 
     def help_command(self, command=None, verbose=True):
         """Show help for command (or all commands, if no name is given)."""
@@ -344,7 +366,3 @@ COMMANDS_HELP = (
     ("Advanced:", ("loop", "stack", "push", "pop")),
     ("Other commands:", ("help", "exit"))
 )
-
-
-if __name__ == '__main__':
-    Shell(True).run()
