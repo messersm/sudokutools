@@ -335,7 +335,8 @@ COMMANDS = {
 
 # helper tuple to define the sections for the help command
 COMMANDS_HELP = (
-    ("Creating sudokus:", ("new", "generate", "generate_from_template")),
+    ("Creating sudokus:",
+        ("new", "decode", "generate", "generate_from_template")),
     ("Setting and getting numbers and candidates:",
         ("get", "set", "get_candidates", "set_candidates", "remove_candidates")),
     ("Printing:", ("encode", "print", "clear")),
