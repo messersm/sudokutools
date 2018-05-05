@@ -168,10 +168,29 @@ class Shell(object):
             print("sudokutools shell %s" % __version__)
             print("For a list of available command type: help")
 
+        lines = ""
         while self.running:
             try:
                 line = input(self.prompt)
-                self.execute_line(line)
+
+                # remove comments
+                idx = line.find('#')
+                if idx >= 0:
+                    line = line[:idx]
+
+                # remove whitespace
+                line = line.strip()
+
+                # handle line wraps
+                if line.endswith('\\'):
+                    lines += line[:-1]
+                else:
+                    lines += line
+
+                    # ignore empty lines
+                    if lines:
+                        self.execute_line(lines)
+                    lines = ""
             except EOFError:
                 sys.exit(0)
 
@@ -286,6 +305,7 @@ COMMANDS = {
     "new": (Sudoku, ),
     "generate": (generate, ),
     "generate_from_template": (generate_from_template, "sudoku"),
+    "decode": (Sudoku.decode, ),
 
     # Changing the current sudoku
     "get": (Sudoku.get_number, "sudoku"),
