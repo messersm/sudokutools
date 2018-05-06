@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 from ast import literal_eval
 import inspect
 import sys
@@ -95,15 +93,11 @@ def parse(s):
         return func, special_args, args, kwargs
 
 
-def clear():
-    """Clear the terminal screen."""
-    print("\033[H\033[J", end="")
-
-
 class Shell(object):
-    def __init__(self, interactive=None, infile=sys.stdin):
+    def __init__(self, interactive=None, infile=sys.stdin, outfile=sys.stdout):
         # automatically determine, if this is an interactive shell
         self.infile = infile
+        self.outfile = outfile
 
         if interactive is None:
             if self.infile.isatty():
@@ -127,6 +121,9 @@ class Shell(object):
         self.__loop_command_list = []
         self.stack = []
 
+    def _print(self, s, end='\n'):
+        self.outfile.write(s + end)
+
     def error(self, s):
         sys.stderr.write("Error: %s\n" % s)
         sys.stderr.flush()
@@ -146,7 +143,7 @@ class Shell(object):
             elif result is None:
                 pass
             else:
-                print(result)
+                self._print(result)
         except Exception as e:
             self.error(str(e))
             # raise
@@ -167,17 +164,17 @@ class Shell(object):
 
     def run(self):
         if self.interactive:
-            print("sudokutools shell %s" % __version__)
-            print("For a list of available command type: help")
+            self._print("sudokutools shell %s" % __version__)
+            self._print("For a list of available command type: help")
 
         lines = ""
         while self.running:
             try:
-                print(self.prompt, end='')
+                self._print(self.prompt, end='')
                 line = self.infile.readline()
             except KeyboardInterrupt:
                 if self.interactive:
-                    print("\nUse 'exit' to leave the shell.")
+                    self._print("\nUse 'exit' to leave the shell.")
                     line = "\n"
                 else:
                     sys.exit(2)
@@ -187,7 +184,7 @@ class Shell(object):
                 # returns an empty line at EOF.
                 if not line:
                     if self.interactive:
-                        print("")
+                        self._print("")
                     break
                 line = line.replace('\n', '')
 
@@ -210,10 +207,14 @@ class Shell(object):
                         self.execute_line(lines)
                     lines = ""
             except KeyboardInterrupt:
-                print("")
+                self._print("")
 
                 if not self.interactive:
                     sys.exit(2)
+
+    def clear_command(self):
+        """Clear the terminal screen."""
+        self._print("\033[H\033[J", end="")
 
 
     def help_command(self, command=None, verbose=True):
@@ -261,9 +262,9 @@ class Shell(object):
         return s
 
     def loop_command(self, n):
-        """Define (n is an int) or run (n is 'start') a loop."""
+        """Define (n is an int) or run (n is 'end') a loop."""
 
-        if n == "start":
+        if n == "end":
             if not self.__loop_n:
                 return self.error("No loop defined.")
 
@@ -284,7 +285,7 @@ class Shell(object):
                 return self.error("loop command n must be int > 0, got %s" % n)
 
             if self.__loop_n:
-                return self.error("Run current loop first ('loop start').")
+                return self.error("Run current loop first ('loop end').")
 
             if self.interactive:
                 self.prompt = "loop %d> " % n
@@ -339,7 +340,7 @@ COMMANDS = {
     # printing
     "encode": (Sudoku.encode, "sudoku"),
     "print": (Sudoku.__str__, "sudoku"),
-    "clear": (clear, ),
+    "clear": (Shell.clear_command, "self"),
 
     # solving
     "bruteforce": (bruteforce, "sudoku"),

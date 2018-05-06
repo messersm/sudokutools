@@ -1,7 +1,5 @@
-from itertools import product
 from unittest import TestCase
 
-from sudokutools.sudoku import Sudoku, INDICES
 from sudokutools.shell import Shell, parse, COMMANDS, COMMANDS_HELP
 
 
@@ -32,47 +30,79 @@ class HelpTests(TestCase):
         self.assertEqual(count, len(COMMANDS))
 
 
+# A list of commands, that should succeed.
+SHELL_COMMANDS_SUCCEED = [
+    "new",
+    "decode '008000000000000001200140050000200060070001503400060017093028070840000000002010000'",
+    "generate min_count=60",
+    "generate min_count=60; generate_from_template tries=-1",
+    "get 0 0",
+    "set 0 0 8",
+    "get_candidates 0 0",
+    "set_candidates 0 0 5,6",
+    "remove_candidates 0 0 1,2",
+    "loop 3; new; loop end",
+    "push",
+    "push; pop",
+    "push; pop 0",
+    "help",
+    "exit"
+]
+
+# A list of commands, that should fail.
+SHELL_COMMANDS_FAIL = [
+    "new sudoku",
+    "decode '008000000000000001200140050000200060070001503400060017093028070840000000002010000 please'",
+    "generate min_count=60 rating='evil'",
+    "new; generate_from_template tries=1",
+    "get 0 0 3",
+    "set 20 20 8",
+    "get_candidates 20 20",
+    "set_candidates 20 20 5,6",
+    "remove_candidates 20 20 1,2",
+    "loop 3; loop 3; loop end",
+    "push 20",
+    "pop",
+    "push; pop 1",
+    "help me please",
+    "exit now",
+    "unknown_command"
+]
+
+
 class CommandTests(TestCase):
-    def test_exit_works(self):
-        """The exit command works."""
-        shell = Shell()
-        shell.execute(*parse("exit"))
-        self.assertEqual(shell.running, False)
+    def test_commands_succeed(self):
+        """The shell executes valid commands without error."""
 
-    def test_new_works(self):
-        """The new command works."""
-        shell = Shell()
-        shell.sudoku[0, 0] = 4
-        shell.execute(*parse("new"))
-        self.assertEqual(len(shell.sudoku), 0)
+        def print_overwrite(*args, **kwargs):
+            pass
 
-    def test_generate_works(self):
-        """The generate command works."""
-        shell = Shell()
-        shell.execute(*parse("generate"))
-        self.assertGreater(len(shell.sudoku), 0)
+        def error_overwrite(*args, **kwargs):
+            error_overwrite.called = True
 
-    def test_generate_min_count(self):
-        """The generate command respects the min_size argument."""
         shell = Shell()
-        shell.execute(*parse("generate min_count=60"))
-        self.assertGreaterEqual(len(shell.sudoku), 60)
+        shell._print = print_overwrite
+        shell.error = error_overwrite
 
-    def test_generate_symmetry(self):
-        """The generate command respects the symmetry argument."""
+        for command in SHELL_COMMANDS_SUCCEED:
+            error_overwrite.called = False
+            shell.execute_line(command)
+            self.assertEqual(error_overwrite.called, False, command)
+
+    def test_commands_fail(self):
+        """The shell executes invalid commands with an error."""
+        def print_overwrite(*args, **kwargs):
+            pass
+
+        def error_overwrite(*args, **kwargs):
+            error_overwrite.called = True
+
         shell = Shell()
-        shell.execute(*parse("generate symmetry='mirror-xy'"))
-        for row, col in product(INDICES, repeat=2):
-            self.assertEqual(
-                bool(shell.sudoku[row, col]),
-                bool(shell.sudoku[row, 8 - col])
-            )
-            self.assertEqual(
-                bool(shell.sudoku[row, col]),
-                bool(shell.sudoku[8 - row, 8 - col])
-            )
-            self.assertEqual(
-                bool(shell.sudoku[row, col]),
-                bool(shell.sudoku[8 - row, col])
-            )
+        shell._print = print_overwrite
+        shell.error = error_overwrite
+
+        for command in SHELL_COMMANDS_FAIL:
+            error_overwrite.called = False
+            shell.execute_line(command)
+            self.assertEqual(error_overwrite.called, True, command)
 
