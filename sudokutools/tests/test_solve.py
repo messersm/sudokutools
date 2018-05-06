@@ -107,15 +107,15 @@ CANDIDATES_EXAMPLE = """
 002609500
 800203009
 005010300|
-45,4578,347,49,2479,147,678,5789,57,
-2469,24678,47,34,47,457,78,278,127,
-25,257,17,89,79,67,47,23579,2357,
-345,345,48,145,3456,24,79,34567,34567,
-123457,123459,49,459,34569,4,1,13456,34568,
-1345,13459,469,4579,3459,48,12,1345,345,
-134,1347,247,46,478,479,1578,1478,47,
-1468,1467,47,245,457,347,17,1467,4679,
-46,4679,4579,4,1478,47,378,24678,2467
+45,4578,3,49,2,147,6,5789,57,
+9,24678,47,3,47,5,78,278,1,
+25,257,1,8,79,6,4,23579,2357,
+345,345,8,1,3456,2,9,34567,34567,
+7,123459,49,459,34569,4,1,13456,8,
+1345,13459,6,7,3459,8,2,1345,345,
+134,1347,2,6,478,9,5,1478,47,
+8,1467,47,2,457,3,17,1467,9,
+46,4679,5,4,1,47,3,24678,2467
 """
 
 
@@ -169,6 +169,17 @@ class CandidatesTest(TestCase):
             c1 = sudoku1.get_candidates(row, col)
             c2 = sudoku2.get_candidates(row, col)
             self.assertEqual(c1, c2)
+
+    def test_number_candidates(self):
+        """A number unequal to 0 in a field is the field's single candidate."""
+        sudoku1 = Sudoku.decode(CANDIDATES_EXAMPLE)
+        sudoku2 = sudoku1.copy()
+        init_candidates(sudoku2)
+
+        for row, col in product(INDICES, repeat=2):
+            value = sudoku1[row, col]
+            if value:
+                self.assertEqual(sudoku2.get_candidates(row, col), {value})
 
 
 class AnalyzeTests(TestCase):

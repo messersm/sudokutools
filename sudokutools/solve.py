@@ -25,6 +25,8 @@ def calc_candidates(sudoku, row, col):
     Returns:
         set: A set of candidates for the field at (row, col)
     """
+    if sudoku[row, col]:
+        return {sudoku[row, col]}
     candidates = set(NUMBERS)
 
     for (i, j) in surrounding_of(row, col, include=False):
