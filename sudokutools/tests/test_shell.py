@@ -30,6 +30,14 @@ class HelpTests(TestCase):
         self.assertEqual(count, len(COMMANDS))
 
 
+class ExitTests(TestCase):
+    def test_exit_in_loop(self):
+        """The Shell exits, even while defining a loop."""
+        shell = Shell()
+        shell.execute_line("loop 3")
+        shell.execute_line("exit")
+        self.assertEqual(shell.running, False)
+
 # A list of commands, that should succeed.
 SHELL_COMMANDS_SUCCEED = [
     "new",
@@ -41,6 +49,10 @@ SHELL_COMMANDS_SUCCEED = [
     "get_candidates 0 0",
     "set_candidates 0 0 5,6",
     "remove_candidates 0 0 1,2",
+    "new; encode",
+    "new; print",
+    "clear",
+    "generate; solve",
     "loop 3; new; loop end",
     "push",
     "push; pop",
@@ -60,12 +72,16 @@ SHELL_COMMANDS_FAIL = [
     "get_candidates 20 20",
     "set_candidates 20 20 5,6",
     "remove_candidates 20 20 1,2",
+    "new; encode 1",
+    "new; print 2",
+    "clear 'screen'",
+    "generate; solve 'sudoku'",
     "loop 3; loop 3; loop end",
     "push 20",
     "pop",
     "push; pop 1",
-    "help me please",
-    "exit now",
+    "help 'me' 'please'",
+    "exit 'now'",
     "unknown_command"
 ]
 

@@ -1,6 +1,8 @@
-from ast import literal_eval
 import inspect
 import sys
+
+from ast import literal_eval
+from collections import namedtuple
 
 from sudokutools import __version__
 from sudokutools.generate import generate, generate_from_template
@@ -10,6 +12,13 @@ from sudokutools.sudoku import Sudoku
 if sys.version_info[0] <= 2:
     input = raw_input
 
+
+# Defines keywords for the shell.
+Keyword = namedtuple("Keyword", ["value"])
+
+SHELL_KEYWORDS = {
+    "end": Keyword("end")
+}
 
 #
 # WARNING: Serious meta-programming incoming. :)
@@ -58,17 +67,22 @@ def parse(s):
         funcname = items[0]
 
         for item in items[1:]:
-            if "=" in item:
-                name, value = item.split('=', 1)
-                try:
-                    kwargs[name] = literal_eval(value)
-                except (SyntaxError, ValueError):
-                    kwargs[name] = value
-            else:
-                try:
-                    args.append(literal_eval(item))
-                except (SyntaxError, ValueError):
-                    args.append(item)
+            try:
+                if "=" in item:
+                    name, value = item.split('=', 1)
+                    try:
+                        kwargs[name] = SHELL_KEYWORDS[value]
+                    except KeyError:
+                        kwargs[name] = literal_eval(value)
+                else:
+                    value = item
+                    try:
+                        args.append(SHELL_KEYWORDS[value])
+                    except KeyError:
+                        args.append(literal_eval(value))
+            except (SyntaxError, ValueError):
+                raise ValueError("Invalid argument: %s " % value +
+                                 "(Did you forget quotation marks?)")
 
         # resolve the function object and check for special args
         try:
@@ -155,12 +169,17 @@ class Shell(object):
 
             try:
                 command = parse(s)
+                # always exit
+                if command[0] == Shell.exit_command:
+                    self.execute(*command)
                 # if we're defining a loop, only execute loop commands.
-                if self.__loop_n and command[0] != Shell.loop_command:
+                elif self.__loop_n and command[0] != Shell.loop_command:
                     self.__loop_command_list.append(command)
                 else:
                     self.execute(*command)
             except KeyError as e:
+                self.error(e)
+            except ValueError as e:
                 self.error(e)
 
     def run(self):
@@ -265,7 +284,7 @@ class Shell(object):
     def loop_command(self, n):
         """Define (n is an int) or run (n is 'end') a loop."""
 
-        if n == "end":
+        if n == Keyword("end"):
             if not self.__loop_n:
                 return self.error("No loop defined.")
 
@@ -322,6 +341,10 @@ class Shell(object):
 
         self.sudoku = self.stack.pop(position)
 
+    def solve_command(self, sudoku):
+        """Solve the current sudoku."""
+        return next(bruteforce(sudoku))
+
 
 SPECIAL_ARGS = ("sudoku", "shell")
 COMMANDS = {
@@ -341,10 +364,10 @@ COMMANDS = {
     # printing
     "encode": (Sudoku.encode, "sudoku"),
     "print": (Sudoku.__str__, "sudoku"),
-    "clear": (Shell.clear_command, "self"),
+    "clear": (Shell.clear_command, "shell"),
 
     # solving
-    "bruteforce": (bruteforce, "sudoku"),
+    "solve": (Shell.solve_command, "shell", "sudoku"),
 
     # advanced
     "loop": (Shell.loop_command, "shell"),
@@ -364,7 +387,7 @@ COMMANDS_HELP = (
     ("Setting and getting numbers and candidates:",
         ("get", "set", "get_candidates", "set_candidates", "remove_candidates")),
     ("Printing:", ("encode", "print", "clear")),
-    ("Solving:", ("bruteforce",)),
+    ("Solving:", ("solve",)),
     ("Advanced:", ("loop", "stack", "push", "pop")),
     ("Other commands:", ("help", "exit"))
 )
