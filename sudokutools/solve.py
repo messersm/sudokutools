@@ -47,31 +47,24 @@ def init_candidates(sudoku):
         sudoku.set_candidates(row, col, calc_candidates(sudoku, row, col))
 
 
-def bruteforce(sudoku, reverse=False):
-    """Solve the sudoku using brute force and return a solution or None.
+def bruteforce(sudoku):
+    """Solve the sudoku using brute force and yield solutions.
 
     Args:
         sudoku (Sudoku): The :class:`Sudoku` instance to solve.
-        reverse: Solve the sudoku in reverse order, meaning that
-                 if a field has multiple valid numbers (a, b, c)
-                 use c instead of a. This only creates another solution,
-                 if the sudoku is not unique.
 
-    Returns:
-        Sudoku: The solution of the sudoku.
-        None: If the sudoku is not solvable.
+    Yields:
+        Sudoku: A solution of the sudoku.
     """
 
     solution = sudoku.copy()
     init_candidates(solution)
-    if _do_bruteforce(solution, reverse=reverse):
-        return solution
-    else:
-        return None
+    for solution in _do_bruteforce(solution):
+        yield solution.copy()
 
 
-def _do_bruteforce(sudoku, reverse=False):
-    """Solve sudoku _inplace_ and return the success status.
+def _do_bruteforce(sudoku):
+    """Solve sudoku _inplace_ and yield it in a solved configuration.
 
     This is an internal function and should not be used
     outside of the solve module.
@@ -83,13 +76,10 @@ def _do_bruteforce(sudoku, reverse=False):
     try:
         row, col = sorted_empty[0]
     except IndexError:
-        return True
+        yield sudoku
+        return
 
-    next_candidates = list(sudoku.get_candidates(row, col))
-
-    if reverse:
-        next_candidates = reversed(next_candidates)
-    for candidate in next_candidates:
+    for candidate in list(sudoku.get_candidates(row, col)):
         sudoku[row, col] = candidate
 
         # save a copy of the candidates in fields, which will be changed
@@ -98,19 +88,13 @@ def _do_bruteforce(sudoku, reverse=False):
             saved_candidates[(i, j)] = set(sudoku.get_candidates(i, j))
             sudoku.remove_candidates(i, j, {candidate})
 
-        if _do_bruteforce(sudoku, reverse=reverse):
-            return True
-        # revert candidate changes and continue with next candidate
-        else:
-            for key, value in saved_candidates.items():
-                i, j = key
-                sudoku.set_candidates(i, j, value)
-            sudoku[row, col] = 0
+        for solution in _do_bruteforce(sudoku):
+            yield solution
 
-    # If we do reach this point, no candidate was valid, thus
-    # the sudoku is not solvable at this point.
-    # The solution must be found higher up the call tree.
-    return False
+        # revert candidate changes and continue with next candidate
+        for (i, j), value in saved_candidates.items():
+            sudoku.set_candidates(i, j, value)
+        sudoku[row, col] = 0
 
 
 def find_conflicts(sudoku, *coords):
@@ -150,8 +134,18 @@ def is_unique(sudoku):
     Returns:
         bool: Whether or not the sudoku is unique.
     """
-    solution1 = bruteforce(sudoku, reverse=False)
-    if not solution1:
+    solutions = bruteforce(sudoku)
+
+    # If we have no solutions return False.
+    try:
+        next(solutions)
+    except StopIteration:
         return False
-    solution2 = bruteforce(sudoku, reverse=True)
-    return solution1 == solution2
+
+    # If we have two (or more solutions return False
+    # otherwise return True.
+    try:
+        next(solutions)
+        return False
+    except StopIteration:
+        return True

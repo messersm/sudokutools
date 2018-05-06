@@ -25,7 +25,7 @@ def create_solution():
     """Returns a sudoku, without empty or conflicting fields.
 
     Returns:
-        Sudoku: The completely filled :class:`Sudoku` instance.
+        Sudoku: The completely filled Sudoku instance.
     """
     sudoku = Sudoku()
 
@@ -44,7 +44,7 @@ def create_solution():
             sudoku[row, col] = numbers.pop()
             c += 1
 
-    return bruteforce(sudoku, reverse=False)
+    return next(bruteforce(sudoku))
 
 
 def generate(min_count=17, symmetry=None):

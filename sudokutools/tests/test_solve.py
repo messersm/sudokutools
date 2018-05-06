@@ -125,35 +125,27 @@ class BruteforceTests(TestCase):
         for example_str, solution_str in SOLVE_EXAMPLES:
             example = Sudoku.decode(example_str)
             solution = Sudoku.decode(solution_str)
-            bruteforced_solution = bruteforce(example, reverse=False)
-            self.assertEqual(bruteforced_solution, solution)
+            self.assertEqual(list(bruteforce(example))[0], solution)
 
-    def test_reverse_examples(self):
-        """Reverse bruteforce still solves the given examples."""
+    def test_examples_count(self):
+        """Bruteforce yields exactly one solution to the given examples."""
         for example_str, solution_str in SOLVE_EXAMPLES:
             example = Sudoku.decode(example_str)
             solution = Sudoku.decode(solution_str)
-            bruteforced_solution = bruteforce(example, reverse=True)
-            self.assertEqual(bruteforced_solution, solution)
+            self.assertEqual(len(list(bruteforce(example))),1)
 
-    def test_returns_solution(self):
-        """If bruteforce solves a sudoku, it returns the solution."""
-        sudoku = Sudoku.decode(SOLVE_EXAMPLES[0][0])
-        solution = bruteforce(sudoku)
-        self.assertNotEqual(solution, None)
-        self.assertEqual(len(solution), 81)
-
-    def test_returns_false(self):
-        """Bruteforce returns None, if a sudoku cannot be solved."""
+    def test_yields_nothing(self):
+        """Bruteforce yields no solution, if a sudoku cannot be solved."""
         sudoku = Sudoku.decode(SOLVE_EXAMPLES[0][0])
         sudoku[0, 0] = 5
-        self.assertEqual(bruteforce(sudoku), None)
+        self.assertEqual(len(list(bruteforce(sudoku))), 0)
 
     def test_reverse_on_non_unique(self):
-        """Reverse bruteforce returns another solution on non-unique sudokus."""
+        """Bruteforce yields multiple solutions on non-unique sudokus."""
         sudoku = Sudoku.decode(NON_UNIQUE)
-        sol1 = bruteforce(sudoku, reverse=False)
-        sol2 = bruteforce(sudoku, reverse=True)
+        solutions = bruteforce(sudoku)
+        sol1 = next(solutions)
+        sol2 = next(solutions)
         self.assertNotEqual(sol1, sol2)
 
 
