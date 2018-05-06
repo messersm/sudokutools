@@ -123,6 +123,7 @@ class Shell(object):
 
     def _print(self, s, end='\n'):
         self.outfile.write(s + end)
+        self.outfile.flush()
 
     def error(self, s):
         sys.stderr.write("Error: %s\n" % s)
