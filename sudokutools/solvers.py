@@ -11,6 +11,7 @@ A single solve step may consist of multiple actions, e.g.
  * Removing some of the candidates at a given field.
 
 Solve steps defined here:
+ * CalcCandidates
  * NakedSingle
  * NakedPair
  * NakedTriple
@@ -20,13 +21,13 @@ Solve steps defined here:
  * Bruteforce
 """
 
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from functools import total_ordering
-from itertools import combinations
+from itertools import combinations, product
 
-from sudokutools.solve import bruteforce
+from sudokutools.solve import calc_candidates, bruteforce
 from sudokutools.sudoku import column_of, row_of, square_of, surrounding_of, \
-    NUMBERS, Sudoku
+    NUMBERS, INDICES, Sudoku
 
 
 class Action(namedtuple("ActionTuple", ["func", "row", "col", "value"])):
@@ -43,64 +44,90 @@ class Action(namedtuple("ActionTuple", ["func", "row", "col", "value"])):
     """
 
 
+@total_ordering
 class SolveStep(object):
-    def __init__(self, *actions):
-        self.__actions_build = False
-        self.actions = list(actions)
+    def __init__(self, clues=(), affected=(), values=()):
+        self.clues = tuple(sorted(clues))
+        self.affected = tuple(sorted(affected))
+        self.values = tuple(sorted(values))
+        self.actions = []
+
+    def __eq__(self, other):
+        return (self.clues, self.affected, self.values) == (
+            other.clues, other.affected, other.values)
+
+    def __lt__(self, other):
+        return (self.clues, self.affected, self.values) < (
+            other.clues, other.affected, other.values)
+
+    def __repr__(self):
+        return "%s(%s, %s, %s)" % (
+            self.__class__.__name__, self.clues, self.affected, self.values)
+
+    @classmethod
+    def find(cls, sudoku):
+        raise NotImplementedError("%s.find() not implemented." % cls.__name__)
 
     def build_actions(self, sudoku):
-        self.__actions_build = True
+        raise NotImplementedError(
+            "%s.build_actions() not implemented." % self.__class__.__name__)
 
     def apply(self, sudoku):
-        if not self.__actions_build:
+        if not self.actions:
             self.build_actions(sudoku)
 
         for action in self.actions:
             action.func(sudoku, action.row, action.col, action.value)
 
+    @classmethod
+    def apply_all(cls, sudoku):
+        for step in cls.find(sudoku):
+            step.apply(sudoku)
 
-@total_ordering
-class SingleFieldStep(SolveStep):
-    def __init__(self, row, col, value):
-        super(SingleFieldStep, self).__init__()
-        self.row = row
-        self.col = col
-        self.value = value
 
-    def __eq__(self, other):
-        return (self.row, self.col, self.value) == (
-            other.row, other.col, other.value)
+class CalculateCandidates(SolveStep):
+    @classmethod
+    def find(cls, sudoku):
+        for row, col in product(INDICES, repeat=2):
+            # ignore fields with defined candidates
+            if sudoku.get_candidates(row, col):
+                continue
 
-    def __lt__(self, other):
-        return (self.row, self.col, self.value) < (
-            other.row, other.col, other.value)
-
-    def __str__(self):
-        return "%s at (%d, %d): %d" % (
-            self.__class__.__name__, self.row, self.col, self.value)
-
-    def __repr__(self):
-        return "%s(%d, %d, %d)" % (
-            self.__class__.__name__, self.row, self.col, self.value)
+            values = calc_candidates(sudoku, row, col)
+            yield cls(((row, col),), ((row, col),), values)
 
     def build_actions(self, sudoku):
-        super(SingleFieldStep, self).build_actions(sudoku)
+        row, col = self.clues[0]
 
         self.actions.append(
-            Action(Sudoku.set_number, self.row, self.col, self.value))
-        self.actions.append(
-            Action(Sudoku.set_candidates, self.row, self.col, self.value))
+            Action(Sudoku.set_candidates, row, col, self.values))
 
-        for i, j in surrounding_of(self.row, self.col, include=False):
-            if self.value in sudoku.get_candidates(i, j):
+
+class SingleFieldStep(SolveStep):
+    def __init__(self, row, col, value):
+        super(SingleFieldStep, self).__init__(
+            ((row, col),), ((row, col),), (value, ))
+
+    @classmethod
+    def find(cls, sudoku):
+        raise NotImplementedError("%s.find() not implemented." % cls.__name__)
+
+    def build_actions(self, sudoku):
+        row, col = self.affected[0]
+        value = self.values[0]
+
+        self.actions.append(
+            Action(Sudoku.set_number, row, col, value))
+        self.actions.append(
+            Action(Sudoku.set_candidates, row, col, {value}))
+
+        for i, j in surrounding_of(row, col, include=False):
+            if value in sudoku.get_candidates(i, j):
                 self.actions.append(
-                    Action(Sudoku.remove_candidates, i, j, {self.value}))
+                    Action(Sudoku.remove_candidates, i, j, {value}))
 
 
 class NakedSingle(SingleFieldStep):
-    def __str__(self):
-        return "Naked single at (%d, %d): %d" % (self.row, self.col, self.value)
-
     @classmethod
     def find(cls, sudoku):
         for row, col in sudoku.empty():
@@ -145,57 +172,16 @@ class Bruteforce(SingleFieldStep):
             yield cls(row, col, solution[row, col])
 
 
-@total_ordering
 class NakedTuple(SolveStep):
     n = 2
 
-    def __init__(self, coords, candidates):
-        super(NakedTuple, self).__init__()
-
-        self.coords = tuple(sorted(coords))
-        self.candidates = tuple(sorted(candidates))
-
-    def __eq__(self, other):
-        return (self.coords, self.candidates) == (
-                other.coords, other.candidates)
-
-    def __lt__(self, other):
-        if self.coords < other.coords:
-            return True
-        elif self.coords > other.coords:
-            return False
-        else:
-            return self.candidates < other.candidates
-
-    def __str__(self):
-        return "%s at %s: %s" % (
-            self.__class__.__name__, self.coords, self.candidates)
-
-    def __repr__(self):
-        return "%s(%s, %s)" % (
-            self.__class__.__name__, self.coords, self.candidates)
-
     def build_actions(self, sudoku):
-        super(NakedTuple, self).build_actions(sudoku)
-
-        # find out, if self.coords lie in the same row, col or square
-        # We can assume len(self.coords) >= 2
-
-        # check for same row
-        if self.coords[0][0] == self.coords[1][0]:
-            func = row_of
-        elif self.coords[0][1] == self.coords[1][1]:
-            func = column_of
-        else:
-            func = square_of
-
-        for (i, j) in func(*self.coords[0]):
-            # skip fields, that are in the coords set
-            if (i, j) in self.coords:
+        for (i, j) in self.affected:
+            # skip fields, that are in the clues tuple
+            if (i, j) in self.clues:
                 continue
 
-            to_remove = set(self.candidates) & sudoku.get_candidates(i, j)
-
+            to_remove = set(self.values) & sudoku.get_candidates(i, j)
             if to_remove:
                 self.actions.append(
                     Action(Sudoku.remove_candidates, i, j, to_remove))
@@ -215,8 +201,8 @@ class NakedTuple(SolveStep):
                     clist.append(coords)
             for coords in clist:
                 for step in cls.__find_at(sudoku, coords):
-                    if step.coords not in yielded_coords:
-                        yielded_coords.append(step.coords)
+                    if step.clues not in yielded_coords:
+                        yielded_coords.append(step.clues)
                         yield step
 
     @classmethod
@@ -233,8 +219,11 @@ class NakedTuple(SolveStep):
                 all_candidates |= sudoku.get_candidates(row, col)
 
             if len(all_candidates) <= cls.n:
-                # Naked Tuple found.
-                yield cls(fields, all_candidates)
+                # Naked Tuple found - only yield, if actions can be applied.
+                step = cls(clues=fields, affected=coords, values=all_candidates)
+                step.build_actions(sudoku)
+                if step.actions:
+                    yield step
 
 
 NakedPair = type("NakedPair", (NakedTuple,), dict(n=2))
@@ -243,12 +232,100 @@ NakedQuad = type("NakedQuad", (NakedTuple,), dict(n=4))
 NakedQuint = type("NakedQuint", (NakedTuple,), dict(n=5))
 
 
-ALL_STEPS = [
+class HiddenTuple(SolveStep):
+    n = 2
+
+    def build_actions(self, sudoku):
+        for row, col in self.affected:
+            to_remove = sudoku.get_candidates(row, col) - set(self.values)
+
+            if to_remove:
+                self.actions.append(
+                    Action(Sudoku.remove_candidates, row, col, to_remove))
+
+    @classmethod
+    def find(cls, sudoku):
+        # keep track of yielded steps
+        yielded_coords = []
+
+        # we work through rows, cols and quads in 3 steps, since the
+        # empty fields can changed in-between
+        for func in row_of, column_of, square_of:
+            clist = []
+            for (i, j) in sudoku.empty():
+                coords = func(i, j)
+                if coords not in clist:
+                    clist.append(coords)
+            for coords in clist:
+                for step in cls.__find_at(sudoku, coords):
+                    yield step
+
+    @classmethod
+    def __find_at(cls, sudoku, coords):
+        cand_coords = defaultdict(lambda: set())
+
+        # build coordinate list for each candidate
+        for cand in NUMBERS:
+            for (row, col) in coords:
+                if cand in sudoku.get_candidates(row, col):
+                    cand_coords[cand].add((row, col))
+
+        # create a list of numbers with at most n occurrences
+        n_times = [c for c in NUMBERS if 1 < len(cand_coords[c]) <= cls.n]
+
+        # select n numbers from the n_times list
+        for numbers in combinations(n_times, cls.n):
+            max_set = set()
+            for num in numbers:
+                max_set |= cand_coords[num]
+
+            if len(max_set) <= cls.n:
+                # hidden tuple found - only yield, if there are actions to apply
+                for (row, col) in max_set:
+                    step = cls(clues=coords, affected=max_set, values=numbers)
+                    step.build_actions(sudoku)
+                    if step.actions:
+                        yield step
+
+
+HiddenPair = type("HiddenPair", (HiddenTuple,), dict(n=2))
+HiddenTriple = type("HiddenTriple", (HiddenTuple,), dict(n=3))
+HiddenQuad = type("HiddenQuad", (HiddenTuple,), dict(n=4))
+HiddenQuint = type("HiddenQuint", (HiddenTuple,), dict(n=5))
+
+
+SOLVE_STEPS = [
+    CalculateCandidates,
     NakedSingle,
     HiddenSingle,
     NakedPair,
+    HiddenPair,
     NakedTriple,
+    HiddenTriple,
     NakedQuad,
+    HiddenQuad,
     NakedQuint,
+    HiddenQuint,
     Bruteforce
 ]
+
+
+def solve(sudoku, steps=SOLVE_STEPS, report=lambda step: None):
+    solution = sudoku.copy()
+    steps = list(steps)
+
+    while True:
+        for cls in steps:
+            count = 0
+
+            for step in cls.find(solution):
+                report(step)
+                step.apply(solution)
+                count += 1
+
+            if count > 0:
+                break
+        else:
+            break
+
+    return solution

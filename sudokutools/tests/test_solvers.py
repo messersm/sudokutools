@@ -6,7 +6,7 @@ from sudokutools.solvers import (
     HiddenSingle,
     Bruteforce
 )
-from sudokutools.sudoku import Sudoku
+from sudokutools.sudoku import Sudoku, row_of, square_of, column_of
 
 # Example for NakedSingle and HiddenSingle
 SINGLES_EXAMPLE = """
@@ -70,7 +70,7 @@ NAKED_PAIR_EXAMPLE = """
 """
 
 NAKED_PAIR_STEPS = [
-    NakedPair(((0, 4), (1, 4)), (3, 6))
+    NakedPair(((0, 4), (1, 4)), column_of(0, 4), (3, 6))
 ]
 
 MORE_TUPLES_EXAMPLE = """
@@ -86,20 +86,32 @@ MORE_TUPLES_EXAMPLE = """
 """
 
 NAKED_TRIPLE_STEPS = [
-    NakedTriple(((0, 3), (4, 3), (5, 3)), (1, 2, 6)),
-    NakedTriple(((3, 6), (3, 7), (3, 8)), (1, 2, 4))
+    NakedTriple(((0, 3), (4, 3), (5, 3)), column_of(0, 3), (1, 2, 6)),
+    NakedTriple(((3, 6), (3, 7), (3, 8)), row_of(3, 0), (1, 2, 4))
 ]
 
 NAKED_QUAD_STEPS = [
-    NakedQuad(((0, 3), (1, 3), (4, 3), (5, 3)), (1, 2, 6, 9)),
-    NakedQuad(((3, 2), (3, 6), (3, 7), (3, 8)), (1, 2, 4, 5))
+    NakedQuad(((0, 3), (1, 3), (4, 3), (5, 3)), column_of(0, 3), (1, 2, 6, 9)),
+    NakedQuad(((3, 2), (3, 6), (3, 7), (3, 8)), row_of(3, 0), (1, 2, 4, 5))
 ]
 
 NAKED_QUINT_STEPS = [
-    NakedQuint(((0, 5), (1, 5), (2, 5), (5, 5), (7, 5)), (3, 5, 6, 8, 9)),
-    NakedQuint(((3, 0), (3, 2), (3, 6), (3, 7), (3, 8)), (1, 2, 4, 5, 6)),
-    NakedQuint(((4, 3), (4, 4), (5, 3), (5, 4), (5, 5)), (1, 2, 3, 5, 6)),
-    NakedQuint(((6, 6), (6, 7), (7, 8), (8, 6), (8, 7)), (1, 2, 3, 7, 8))
+    NakedQuint(
+        ((0, 5), (1, 5), (2, 5), (5, 5), (7, 5)),
+        column_of(0, 5),
+        (3, 5, 6, 8, 9)),
+    NakedQuint(
+        ((3, 0), (3, 2), (3, 6), (3, 7), (3, 8)),
+        row_of(3, 0),
+        (1, 2, 4, 5, 6)),
+    NakedQuint(
+        ((4, 3), (4, 4), (5, 3), (5, 4), (5, 5)),
+        square_of(4, 3),
+        (1, 2, 3, 5, 6)),
+    NakedQuint(
+        ((6, 6), (6, 7), (7, 8), (8, 6), (8, 7)),
+        square_of(6, 6),
+        (1, 2, 3, 7, 8))
 ]
 
 
