@@ -121,4 +121,3 @@ class CommandTests(TestCase):
             error_overwrite.called = False
             shell.execute_line(command)
             self.assertEqual(error_overwrite.called, True, command)
-

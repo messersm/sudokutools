@@ -1,4 +1,8 @@
+from __future__ import print_function
+
 import inspect
+import os
+import platform
 import sys
 
 from ast import literal_eval
@@ -6,19 +10,13 @@ from collections import namedtuple
 
 from sudokutools import __version__
 from sudokutools.generate import generate, generate_from_template
-from sudokutools.solve import bruteforce
+from sudokutools.printing import view
+from sudokutools.solve import bruteforce, init_candidates
 from sudokutools.sudoku import Sudoku
 
 if sys.version_info[0] <= 2:
     input = raw_input
 
-
-# Defines keywords for the shell.
-Keyword = namedtuple("Keyword", ["value"])
-
-SHELL_KEYWORDS = {
-    "end": Keyword("end")
-}
 
 #
 # WARNING: Serious meta-programming incoming. :)
@@ -70,16 +68,19 @@ def parse(s):
             try:
                 if "=" in item:
                     name, value = item.split('=', 1)
-                    try:
-                        kwargs[name] = SHELL_KEYWORDS[value]
-                    except KeyError:
-                        kwargs[name] = literal_eval(value)
+                    kwargs[name] = literal_eval(value)
                 else:
+                    # Positional arguments could
+                    # also be a keywords or a commands.
                     value = item
-                    try:
-                        args.append(SHELL_KEYWORDS[value])
-                    except KeyError:
+
+                    if value in COMMANDS:
+                        args.append(Command(value))
+                    elif value in SHELL_KEYWORDS:
+                        args.append(Keyword(value))
+                    else:
                         args.append(literal_eval(value))
+
             except (SyntaxError, ValueError):
                 raise ValueError("Invalid argument: %s " % value +
                                  "(Did you forget quotation marks?)")
@@ -107,11 +108,34 @@ def parse(s):
         return func, special_args, args, kwargs
 
 
+def clear():
+    """Clear the terminal screen."""
+
+    # For some reason, the standard VT100 control
+    # sequence doesn't work on Windows.
+    if platform.system() == "Windows":
+        os.system("cls")
+    else:
+        print("\033[H\033[J", end="")
+
+
 class Shell(object):
-    def __init__(self, interactive=None, infile=sys.stdin, outfile=sys.stdout):
+    def __init__(
+            self, interactive=None, infile=sys.stdin, outfile=sys.stdout,
+            commands=None, keywords=None):
         # automatically determine, if this is an interactive shell
         self.infile = infile
         self.outfile = outfile
+
+        if commands:
+            self.commands = commands
+        else:
+            self.commands = COMMANDS
+
+        if keywords:
+            self.keywords = keywords
+        else:
+            self.keywords = SHELL_KEYWORDS
 
         if interactive is None:
             if self.infile.isatty():
@@ -232,22 +256,12 @@ class Shell(object):
                 if not self.interactive:
                     sys.exit(2)
 
-    def clear_command(self):
-        """Clear the terminal screen."""
-        self._print("\033[H\033[J", end="")
-
-
     def help_command(self, command=None, verbose=True):
         """Show help for command (or all commands, if no name is given)."""
         if command:
-            if command not in COMMANDS:
-                return self.error(
-                    "Unknown command: %s. Type 'help' for a list of commands." %
-                    command)
-
             s = ""
 
-            func = COMMANDS[command][0]
+            func = COMMANDS[command.name][0]
 
             # use __init__, if func is a class
             if inspect.isclass(func):
@@ -260,20 +274,19 @@ class Shell(object):
             else:
                 help_str = func.__doc__.split("\n")[0].strip()
 
-            s += " ".join((command, sig)) + ": " + help_str
+            s += " ".join((command.name, sig)) + ": " + help_str
 
             if verbose and func.__doc__:
                 s += "\n".join(func.__doc__.split('\n')[1:])
-
         else:
             s = ""
 
             for section, names in COMMANDS_HELP:
                 s += section + "\n"
-                for command in names:
+                for name in names:
                     # Add the first line of the full help
                     s += " - "
-                    s += self.help_command(command, verbose=False) + "\n"
+                    s += self.help_command(Command(name), verbose=False) + "\n"
                 # newline at end of section
                 s += "\n"
 
@@ -360,11 +373,13 @@ COMMANDS = {
     "set_candidates": (Sudoku.set_candidates, "sudoku"),
     "get_candidates": (Sudoku.get_candidates, "sudoku"),
     "remove_candidates": (Sudoku.remove_candidates, "sudoku"),
+    "init_candidates": (init_candidates, "sudoku"),
 
     # printing
     "encode": (Sudoku.encode, "sudoku"),
     "print": (Sudoku.__str__, "sudoku"),
-    "clear": (Shell.clear_command, "shell"),
+    "clear": (clear,),
+    "view": (view, "sudoku"),
 
     # solving
     "solve": (Shell.solve_command, "shell", "sudoku"),
@@ -385,9 +400,18 @@ COMMANDS_HELP = (
     ("Creating sudokus:",
         ("new", "decode", "generate", "generate_from_template")),
     ("Setting and getting numbers and candidates:",
-        ("get", "set", "get_candidates", "set_candidates", "remove_candidates")),
-    ("Printing:", ("encode", "print", "clear")),
+        ("get", "set", "get_candidates", "set_candidates", "remove_candidates",
+         "init_candidates")),
+    ("Printing:", ("encode", "print", "clear", "view")),
     ("Solving:", ("solve",)),
     ("Advanced:", ("loop", "stack", "push", "pop")),
     ("Other commands:", ("help", "exit"))
 )
+
+# Defines keywords for the shell.
+Keyword = namedtuple("Keyword", ["name"])
+Command = namedtuple("Command", ["name"])
+
+SHELL_KEYWORDS = {
+    "end": Keyword("end")
+}
