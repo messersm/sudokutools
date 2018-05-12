@@ -55,6 +55,10 @@ def view(sudoku, include_candidates=True):
     max_count = max([len(sudoku.get_candidates(row, col))
                      for (row, col) in product(INDICES, repeat=2)])
 
+    # In case, candidates aren't calculated yet, this gives a
+    # better representation.
+    max_count = max([max_count, 1])
+
     rule = "-" * (3 + 3 * max_count) + "+"
     rule += "-" * (4 + 3 * max_count) + "+"
     rule += "-" * (3 + 3 * max_count) + "\n"
