@@ -54,10 +54,27 @@ class Sudoku(object):
      * decode()
     """
 
-    def __init__(self):
+    def __init__(self, size=(3, 3)):
         """Create a new empty sudoku."""
-        self.__numbers = [[0] * 9 for _ in range(9)]
-        self.__candidates = [[frozenset()] * 9 for _ in range(9)]
+        try:
+            self.size = tuple(size)
+            self.width = size[0]
+            self.height = size[1]
+            self.indices = tuple(range(size[0] * size[1]))
+            self.numbers = tuple(range(1, size[0] * size[1] + 1))
+        except (IndexError, KeyError):
+            raise ValueError("Invalid sudoku size: %s" % size)
+        self.__numbers = [[0] * len(self.indices) for _ in self.indices]
+        self.__candidates = [[frozenset()] * len(self.indices)
+                             for _ in self.indices]
+
+    def __iter__(self):
+        """Iterate through all coordinates of the sudoku.
+
+        Yields: (int, int): row and column of each field.
+        """
+        for row, col in product(self.indices, repeat=2):
+            yield (row, col)
 
     def empty(self):
         """Iterate through the coordinates of all empty fields.
@@ -65,7 +82,7 @@ class Sudoku(object):
         Yields:
             (int, int): row and column of the next empty field.
         """
-        for row, col in product(INDICES, repeat=2):
+        for row, col in self:
             if not self.__numbers[row][col]:
                 yield row, col
 
@@ -84,7 +101,7 @@ class Sudoku(object):
         Yields:
             (int, int): row and column of the next different field.
         """
-        for row, col in product(INDICES, repeat=2):
+        for row, col in self:
             if self[row, col] != other[row, col]:
                 yield row, col
 
@@ -97,12 +114,12 @@ class Sudoku(object):
         Returns:
             Sudoku: The new sudoku instance.
         """
-        sudoku = Sudoku()
-        for row, col in product(INDICES, repeat=2):
+        sudoku = Sudoku(size=self.size)
+        for row, col in self:
             sudoku[row, col] = self[row, col]
 
         if include_candidates:
-            for row, col in product(INDICES, repeat=2):
+            for row, col in self:
                 c = self.get_candidates(row, col)
                 sudoku.set_candidates(row, col, c)
 
@@ -121,7 +138,7 @@ class Sudoku(object):
                   is an incompatible type.
         """
         try:
-            for row, col in product(INDICES, repeat=2):
+            for row, col in self:
                 if self[row, col] != other[row, col]:
                     return False
             return True
@@ -136,23 +153,27 @@ class Sudoku(object):
         """
         s = ""
 
-        for rc, row in enumerate(INDICES):
+        for rc, row in enumerate(self.indices):
             col_str = []
-            for cc, col in enumerate(INDICES):
+            for cc, col in enumerate(self.indices):
                 val = str(self[row, col])
                 if val == "0":
                     val = " "
                 col_str.append(val)
-                if cc % 3 == 2 and cc < 8:
+
+                if cc % self.width == self.width - 1 and cc < len(self.numbers) - 1:
                     col_str.append("|")
 
             s += " ".join(col_str)
 
-            if rc < 8:
+            if rc < len(self.numbers) - 1:
                 s += "\n"
 
-            if rc % 3 == 2 and rc < 8:
-                s += "------+-------+------\n"
+            if (rc + 1) % self.height == 0 and rc < len(self.numbers) - 1:
+                row_sep = "+".join(["-" * (self.width * 2 + 1)
+                                    for _ in range(self.height)])
+
+                s += row_sep[1:-1] + "\n"
         return s
 
     def __getitem__(self, key):
@@ -160,7 +181,7 @@ class Sudoku(object):
 
         Args:
             key (int, int): row and column of the requested field.
-                            Must be in range(0, 9).
+                            Must be in range(0, width * height).
 
         Returns:
             int: The number in the given field, 0 representing an empty field.
@@ -176,7 +197,7 @@ class Sudoku(object):
 
         Args:
             key (int, int): row and column of the requested field.
-                            Must be in range(0, 9).
+                            Must be in range(0, width * height).
             value (int): The number to set the field to,
                          0 representing an empty field.
 
@@ -193,7 +214,7 @@ class Sudoku(object):
             int: The number of non-empty fields within this sudoku.
         """
         count = 0
-        for row, col in product(INDICES, repeat=2):
+        for row, col in self:
             if self.__numbers[row][col]:
                 count += 1
         return count
@@ -259,8 +280,8 @@ class Sudoku(object):
         For examples of default output string see decode().
         """
         rows = []
-        for row in INDICES:
-            numbers = [str(self[row, col]) for col in INDICES]
+        for row in self.indices:
+            numbers = [str(self[row, col]) for col in self.indices]
             rows.append(col_sep.join(numbers))
 
         s = row_sep.join(rows)
@@ -268,7 +289,7 @@ class Sudoku(object):
         if include_candidates:
             all_candidates = []
 
-            for row, col in product(INDICES, repeat=2):
+            for row, col in self:
                 clist = list(self.get_candidates(row, col))
                 cstr = "".join([str(i) for i in sorted(clist)])
                 all_candidates.append(cstr)
@@ -278,14 +299,17 @@ class Sudoku(object):
         return s
 
     @classmethod
-    def decode(cls, s):
+    def decode(cls, s, empty="0", sudoku_sep="|", candidate_sep=",", size=None):
         """Create a new sudoku from the string s.
 
         Args:
             s (str): A string representing the sudoku (see below).
+            empty (char): A character representing empty fields.
+            candidate_sep (char): A character separating the candidate lists.
+            size (int, int):
 
         Returns:
-            Sudoku: The newly created :class:`Sudoku` instance.
+            Sudoku: The newly created sudoku.
 
         Examples for s:
             000030000005009602008004013020060000703040106000080090210300800306800700000020000
@@ -316,32 +340,61 @@ class Sudoku(object):
         This is the default format, which encode() uses and no other
         format is supported right now.
         """
-        if '|' in s:
-            s, c_str = s.split('|', 1)
+        if sudoku_sep in s:
+            s, c_str = s.split(sudoku_sep, 1)
         else:
             c_str = ""
 
+        # try to get size automatically:
+        if size is None:
+            s1 = s[:]
+            for c in whitespace:
+                if c == empty:
+                    continue
+                s1 = s1.replace(c, '')
+
+            count = len(s1)
+            length = count**0.5
+            if not length.is_integer():
+                raise ValueError("Invalid number of fields given " +
+                                 "(must be square number): %d" % count)
+
+            length = int(length)
+            width = length**0.5
+            if width.is_integer():
+                size = int(width), int(width)
+            else:
+                for i in range(2, length+1):
+                    if length % i == 0:
+                        width = i
+                        break
+                if width == length:
+                    raise ValueError("Invalid row length: %d" % length)
+                size = (width, length // width)
+
         # read sudoku fields
-        sudoku = Sudoku()
+        sudoku = Sudoku(size=size)
         col = 0
         row = 0
 
         for item in s:
-            if item in whitespace:
+            if item is empty:
+                sudoku[row, col] = 0
+            elif item in whitespace:
                 continue
 
             sudoku[row, col] = int(item)
             col += 1
-            if col >= 9:
+            if col >= sudoku.width * sudoku.height:
                 row += 1
                 col = 0
-            if row >= 9:
+            if row >= sudoku.width * sudoku.height:
                 break
 
         # read candidates
         for c in whitespace:
             c_str = c_str.replace(c, '')
-        c_str = c_str.split(',')
+        c_str = c_str.split(candidate_sep)
 
         col = 0
         row = 0
@@ -352,13 +405,64 @@ class Sudoku(object):
 
             sudoku.set_candidates(row, col, set([int(item) for item in c]))
             col += 1
-            if col == 9:
+            if col == sudoku.width * sudoku.height:
                 col = 0
                 row += 1
-            if row == 9:
+            if row == sudoku.width * sudoku.height:
                 break
 
         return sudoku
+
+    def column_of(self, row, col, include=True):
+        """Return all coordinates in the column of (col, row) as a list.
+
+        Args:
+            row (int): The row of the field.
+            col (int): The column of the field.
+            include (bool): Whether or not to include (row, col).
+
+        Returns:
+            list of (int, int): list of pairs (row, column) of all fields in
+                                the same column.
+        """
+        return [(i, col) for i in self.indices if include or i != row]
+
+    def row_of(self, row, col, include=True):
+        """Return all coordinates in the row of (col, row) as a list.
+
+        Args:
+            row (int): The row of the field.
+            col (int): The column of the field.
+            include (bool): Whether or not to include (row, col).
+
+        Returns:
+            list of (int, int): list of pairs (row, column) of all fields in
+                                the same row.
+        """
+        return [(row, j) for j in self.indices if include or j != col]
+
+    def region_of(self, row, col, include=True):
+        """Return all coordinates in the region of (col, row) as a list.
+
+        Args:
+            row (int): The row of the field.
+            col (int): The column of the field.
+            include (bool): Whether or not to include (row, col).
+
+        Returns:
+            list of (int, int): list of pairs (row, column) of all fields in
+                                the same box (region).
+        """
+        width, height = self.size
+        grid_x = col - (col % width)
+        grid_y = row - (row % height)
+
+        coords = [(grid_y + i, grid_x + j)
+                  for i in range(height) for j in range(width)]
+        if not include:
+            coords.remove((row, col))
+        return coords
+
 
 
 def column_of(row, col, include=True):
