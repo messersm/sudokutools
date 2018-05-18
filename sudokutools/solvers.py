@@ -18,6 +18,10 @@ Solve steps defined here:
  * NakedQuad
  * NakedQuint
  * HiddenSingle
+ * HiddenPair
+ * HiddenTriple
+ * HiddenQuad
+ * HiddenQuint
  * Bruteforce
 """
 
@@ -47,6 +51,17 @@ class Action(namedtuple("ActionTuple", ["func", "row", "col", "value"])):
 @total_ordering
 class SolveStep(object):
     def __init__(self, clues=(), affected=(), values=()):
+        """Create a new solve step.
+
+        Args:
+            clues (iterable of (int, int)): An iterable of (row, col) pairs
+                                            which cause this step.
+            affected (iterable of (int, int)): An iterable of (row, col)
+                                               pairs which are affected by
+                                               this step.
+            values (iterable of int) : A list of values to apply to the
+                                       affected fields.
+        """
         self.clues = tuple(sorted(clues))
         self.affected = tuple(sorted(affected))
         self.values = tuple(sorted(values))
@@ -64,8 +79,21 @@ class SolveStep(object):
         return "%s(%s, %s, %s)" % (
             self.__class__.__name__, self.clues, self.affected, self.values)
 
+    def __str__(self):
+        return "%s at %s: %s" % (
+            self.__class__.__name__, self.clues, self.values)
+
     @classmethod
     def find(cls, sudoku):
+        """Iterates through all possible solve steps of this class.
+
+        Args:
+            sudoku (Sudoku): The sudoku to solve.
+
+        Yields:
+            SolveStep: The next solve step.
+        """
+
         raise NotImplementedError("%s.find() not implemented." % cls.__name__)
 
     def build_actions(self, sudoku):
@@ -73,6 +101,7 @@ class SolveStep(object):
             "%s.build_actions() not implemented." % self.__class__.__name__)
 
     def apply(self, sudoku):
+        """Apply this solve step to the sudoku."""
         if not self.actions:
             self.build_actions(sudoku)
 
@@ -81,11 +110,13 @@ class SolveStep(object):
 
     @classmethod
     def apply_all(cls, sudoku):
+        """Apply all possible steps of this class to the sudoku."""
         for step in cls.find(sudoku):
             step.apply(sudoku)
 
 
 class CalculateCandidates(SolveStep):
+    """Calculates the candidates of fields."""
     @classmethod
     def find(cls, sudoku):
         for row, col in product(INDICES, repeat=2):
@@ -103,9 +134,11 @@ class CalculateCandidates(SolveStep):
             Action(Sudoku.set_candidates, row, col, self.values))
 
 
-class SingleFieldStep(SolveStep):
+class _SingleFieldStep(SolveStep):
+    """Represents a solve method, which sets a single field."""
+
     def __init__(self, row, col, value):
-        super(SingleFieldStep, self).__init__(
+        super(_SingleFieldStep, self).__init__(
             ((row, col),), ((row, col),), (value, ))
 
     def __repr__(self):
@@ -132,7 +165,14 @@ class SingleFieldStep(SolveStep):
                     Action(Sudoku.remove_candidates, i, j, {value}))
 
 
-class NakedSingle(SingleFieldStep):
+class NakedSingle(_SingleFieldStep):
+    """Finds naked singles in a sudoku.
+
+    A naked single is a field with only one candidate.
+
+    The field can be set to this candidate and this candidate
+    can be removed from all fields in the same row, column and box.
+    """
     @classmethod
     def find(cls, sudoku):
         for row, col in sudoku.empty():
@@ -143,7 +183,15 @@ class NakedSingle(SingleFieldStep):
                 yield cls(row, col, value)
 
 
-class HiddenSingle(SingleFieldStep):
+class HiddenSingle(_SingleFieldStep):
+    """Finds hidden singles in a sudoku.
+
+    A hidden single is a field containing a candidate which
+    exists in no other fields in the same row, column or box.
+
+    The field can be set to this candidate and this candidate
+    can be removed from all fields in the same row, column and box.
+    """
     @classmethod
     def find(cls, sudoku):
         yielded_coords = []
@@ -166,7 +214,13 @@ class HiddenSingle(SingleFieldStep):
                     break
 
 
-class Bruteforce(SingleFieldStep):
+class Bruteforce(_SingleFieldStep):
+    """Solve the sudoku using brute force.
+
+    Bruteforce simply works by trial and error testing each
+    combination of valid candidates in a field until a
+    solution has been found.
+    """
     @classmethod
     def find(cls, sudoku):
         try:
@@ -178,6 +232,14 @@ class Bruteforce(SingleFieldStep):
 
 
 class NakedTuple(SolveStep):
+    """Finds naked tuples in a sudoku.
+
+    A naked tuple is a set of n fields in a row, column or box,
+    which (in unison) contain a set of at most n candidates.
+
+    These candidates can be removed from all fields in the
+    same row, column or box.
+    """
     n = 2
 
     def build_actions(self, sudoku):
@@ -238,6 +300,14 @@ NakedQuint = type("NakedQuint", (NakedTuple,), dict(n=5))
 
 
 class HiddenTuple(SolveStep):
+    """Finds hidden tuples in a sudoku.
+
+    A hidden tuple is a set of n fields in a row, column or box,
+    which (in unison) contain a set of at most n candidates, which
+    are present in no other fields of the same row, column or box.
+
+    All other candidates can be removed from these fields.
+    """
     n = 2
 
     def build_actions(self, sudoku):
@@ -299,6 +369,7 @@ HiddenQuad = type("HiddenQuad", (HiddenTuple,), dict(n=4))
 HiddenQuint = type("HiddenQuint", (HiddenTuple,), dict(n=5))
 
 
+# A list of available solve methods.
 SOLVE_STEPS = [
     CalculateCandidates,
     NakedSingle,
@@ -316,6 +387,23 @@ SOLVE_STEPS = [
 
 
 def solve(sudoku, steps=SOLVE_STEPS, report=lambda step: None):
+    """Solve the sudoku and return the solution.
+
+    Args:
+        sudoku (Sudoku): The sudoku to solve.
+        steps (iterable): The classes of steps that can be used.
+        report (callable): A function taking a single argument (the current
+                           step), which can be used as a callback.
+
+    Returns:
+        Sudoku: The solution of the sudoku.
+
+    Be aware, that not all sudokus may be solved, if the steps
+    argument restricts the allowed solve methods. E.g. CalculateCandidates
+    should almost always be the first solving method in the steps list,
+    since most other methods use the calculated candidates.
+    """
+
     solution = sudoku.copy()
     steps = list(steps)
 
