@@ -52,6 +52,15 @@ sodukutools is licensed under the MIT-License, which means, you can do pretty
 much everything you want with it. For details see ``LICENSE.txt``.
 
 ## Examples
++ [Parsing and printing](#parsing-and-printing)
++ [Printing sudokus with candidates](#printing-sudokus-with-candidates)
++ [Calculating candidates](#calculating-candidates)
++ [Checking sudokus](#checking-sudokus)
++ [Solving sudokus](#solving-sudokus)
++ [Creating new sudokus](#creating-new-sudokus)
++ [Creating sudokus from templates](#creating-sudokus-from-templates)
+
+
 ### Parsing and printing
 ```python
 from sudokutools.sudoku import Sudoku
@@ -358,6 +367,11 @@ Output:
 There's much more that you can do, so be sure to check out the documentation.
 
 ## Sudoku in the Shell
++ [Interactive usage](#interactive-usage)
++ [Creating new sudokus](#creating-new-sudokus-1)
++ [Using the stack](#using-the-stack)
++ [Commandline usage](#commandline-usage)
+
 sudokutools comes with a command line shell, which can
 be used for basic tasks including creating, printing and solving sudokus.
 You can write shell script for this shell as is demonstrated below or
@@ -459,6 +473,10 @@ $ sudokutools -c "loop 3; generate; encode; solve; encode; loop end"
 ```
 
 ## Road map and changelog
++ [Version 0.3.0 (planned)](#version-030--planned-)
++ [Version 0.2.0 (current)](#version-020--current-)
++ [Version 0.1.1](#version-011)
++ [Version 0.1](#version-01)
 
 ### Version 0.3.0 (planned)
 #### Features (planned):
