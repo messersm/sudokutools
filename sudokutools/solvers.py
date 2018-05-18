@@ -146,6 +146,10 @@ class _SingleFieldStep(SolveStep):
         value = self.values[0]
         return "%s(%d, %d, %d)" % (self.__class__.__name__, row, col, value)
 
+    def __str__(self):
+        return "%s at %s: %s" % (
+            self.__class__.__name__, self.clues[0], self.values[0])
+
     @classmethod
     def find(cls, sudoku):
         raise NotImplementedError("%s.find() not implemented." % cls.__name__)
