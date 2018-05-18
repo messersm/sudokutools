@@ -15,13 +15,25 @@
 5 4 6 | 9 7 8 | 3 2 1
 ```
 
+## Table of contents
+* [About](#about)
+* [Development status](#development-status)
+* [Installation](#installation)
+* [Documentation](#documentation)
+* [License](#license)
+* [Examples](#examples)
+* [Sudoku in the Shell](#sudoku-in-the-shell)
+* [Road map and changelog](#road-map-and-changelog)
+
 ## About
 sudokutools is a collection of functions and classes, which enable you
-to read, create, analyze, solve and print sudokus.
+to read, create, analyze, solve and print sudokus written in Python. It
+also comes with a commandline tool (the sudokutools shell) named
+``sudokutools``.
 
 ## Development status
 This software is in Alpha. API changes may occur between minor versions.
-It should however be quiet stable: Right now its functionality is covered
+It should however be quite stable: Right now its functionality is covered
 with 40+ unit tests.
 
 ## Installation
@@ -39,7 +51,7 @@ You can find the library documentation on readthedocs: <http://sudokutools.readt
 sodukutools is licensed under the MIT-License, which means, you can do pretty
 much everything you want with it. For details see ``LICENSE.txt``.
 
-## Features
+## Examples
 ### Parsing and printing
 ```python
 from sudokutools.sudoku import Sudoku
@@ -83,6 +95,31 @@ For humans:
       |   2   |      
 ```
 
+### Printing sudokus with candidates
+```python
+from sudokutools.solve import init_candidates
+from sudokutools.printing import view
+
+# sudoku is the instance from the code above
+init_candidates(sudoku)
+print(view(sudoku))
+```
+
+Output:
+```
+1469   4679   12479  | 12567  3      125678 | 459    4578   45789 
+14     347    5      | 17     17     9      | 6      478    2     
+69     679    8      | 2567   57     4      | 59     1      3     
+---------------------+----------------------+---------------------
+14589  2      149    | 1579   6      1357   | 345    34578  4578  
+7      589    3      | 259    4      25     | 1      258    6     
+1456   456    14     | 1257   8      12357  | 2345   9      457   
+---------------------+----------------------+---------------------
+2      1      479    | 3      579    567    | 8      456    459   
+3      459    6      | 8      159    15     | 7      245    1459  
+4589   45789  479    | 145679 2      1567   | 3459   3456   1459  
+```
+
 ### Calculating candidates
 ```python
 from sudokutools.solve import calc_candidates
@@ -97,13 +134,86 @@ Output:
 {4, 5, 7, 8, 9}
 ```
 
+### Checking sudokus
+Sudokus are required to have only one solutions, which can be checked using
+``sudokutools.solve.is_unique()``. You can also count the number of solutions
+using ``sudokutools.solve.bruteforce()``.
+Do note, that ``is_unique()`` is much faster than counting the number of
+solutions, since it returns after finding two solutions.
+
+```python
+from sudokutools.solve import bruteforce, is_unique, find_conflicts
+from sudokutools.sudoku import Sudoku
+
+SUDOKU = """
+000000006
+002040007
+090100008
+700200000
+000070900
+189006000
+050000030
+000000800
+000032140
+"""
+
+sudoku = Sudoku.decode(SUDOKU)
+print(is_unique(sudoku))
+print("This sudoku has %d solutions." % len(list(bruteforce(sudoku))))
+```
+
+Output:
+```
+False
+This sudoku has 1540 solutions.
+```
+
+Finding conflicts can be done using ``sudokutools.solve.find_conflicts()``
+which iterates through all fields containing conflicts, yielding the two
+conflicting fields as well as the conflicting number:
+
+```python
+from sudokutools.solve import find_conflicts
+from sudokutools.sudoku import Sudoku
+
+SUDOKU_WITH_CONFLICTS = """
+020000006
+002040007
+090100008
+700200000
+000070900
+189006000
+050000030
+000000800
+300032140
+"""
+
+sudoku = Sudoku.decode(SUDOKU_WITH_CONFLICTS)
+for conflict in find_conflicts(sudoku):
+    print(conflict)
+```
+
+Output:
+```
+((0, 1), (1, 2), 2)
+((1, 2), (0, 1), 2)
+((8, 0), (8, 4), 3)
+((8, 4), (8, 0), 3)
+```
+
 ### Solving sudokus
+sudokutools comes with two modules for solving sudokus. The
+``sudokutools.solve`` module provides some low-level functions that
+simply get the job done. ``sudokutools.solvers`` provides a more
+fine-graded approach to solving sudokus.
+
 ```python
 from sudokutools.solve import bruteforce
 
 # sudoku is the instance from the code above
-solution = bruteforce(sudoku)
-print(solution)
+# bruteforce() iterates through all possible solutions.
+for solution in bruteforce(sudoku):
+    print(solution)
 ```
 
 Output:
@@ -119,6 +229,67 @@ Output:
 2 1 9 | 3 7 6 | 8 4 5
 3 4 6 | 8 9 5 | 7 2 1
 8 5 7 | 4 2 1 | 3 6 9
+```
+
+If you want to use a specific solving method you can use the ones provided
+by ``sudokutools.solvers``. Since most solving methods depend on the
+candidates of fields, these must be calculated first, using the
+``CalculateCandidates`` method (which basically does the same as the
+``init_candidates()`` function from ``sudokutools.solve`` but provides
+more metadata on the actions that are executed).
+
+```python
+from sudokutools.solvers import CalculateCandidates, HiddenSingle
+from sudokutools.sudoku import Sudoku
+
+SUDOKU = """
+400305020
+908010000
+000000000
+003000062
+500020000
+080700000
+700000500
+005003004
+000408103
+"""
+
+sudoku = Sudoku.decode(SUDOKU)
+# Candidates must always been calculated first.
+CalculateCandidates.apply_all(sudoku)
+
+for step in HiddenSingle.find(sudoku):
+    print(step)
+    step.apply(sudoku)
+
+print("")
+print(sudoku)
+```
+
+Output:
+```
+HiddenSingle at (2, 0): 3
+HiddenSingle at (3, 3): 5
+HiddenSingle at (5, 4): 3
+HiddenSingle at (6, 1): 3
+HiddenSingle at (6, 2): 4
+HiddenSingle at (7, 0): 8
+HiddenSingle at (7, 1): 1
+HiddenSingle at (7, 6): 2
+HiddenSingle at (8, 4): 5
+HiddenSingle at (8, 7): 7
+
+4     | 3   5 |   2  
+9   8 |   1   |      
+3     |       |      
+------+-------+------
+    3 | 5     |   6 2
+5     |   2   |      
+  8   | 7 3   |      
+------+-------+------
+7 3 4 |       | 5    
+8 1 5 |     3 | 2   4
+      | 4 5 8 | 1 7 3
 ```
 
 ### Creating new sudokus
@@ -144,30 +315,187 @@ Output:
     8 |       | 1    
 ```
 
+### Creating sudokus from templates
+So you want to draw your favorite animal as sudoku?
+Then you have give the ``generate_from_template()`` function a try:
+
+```python
+from sudokutools.generate import generate_from_template
+from sudokutools.sudoku import Sudoku
+
+CAT = """
+110000011
+101000101
+100111001
+111000111
+111000111
+100000001
+010010010
+001000100
+000111000
+"""
+
+template = Sudoku.decode(CAT)
+sudoku = generate_from_template(template, tries=-1)
+print(sudoku)
+```
+
+Output:
+```
+5 9   |       |   2 7
+7   2 |       | 9   1
+3     | 9 7 2 |     5
+------+-------+------
+8 5 3 |       | 1 9 2
+1 2 7 |       | 6 3 4
+4     |       |     8
+------+-------+------
+  8   |   3   |   5  
+    1 |       | 2    
+      | 6 8 7 |      
+```
+
 There's much more that you can do, so be sure to check out the documentation.
+
+## Sudoku in the Shell
+sudokutools comes with a command line shell, which can
+be used for basic tasks including creating, printing and solving sudokus.
+You can write shell script for this shell as is demonstrated below or
+simple use the shell in an interactive mode or read from standard input.
+The introduction text and command prompt are only displayed when in
+interactive mode. 
+
+The shell operates on an internally saved sudoku (which is empty by default).
+Generating a new sudoku or change operations overwrite the current sudoku.
+You can however save the current sudoku to a stack (see below). 
+
+### Interactive usage
+Typing ```sudokutools``` or ```python -m sudokutools``` will drop you into
+the sudokutools shell. Simply type ``help`` for an overview of commands. The
+commands provided by the shell behave in the same way as the corresponding
+python functions, but the shell also has some unique commands.
+
+```
+sudokutools shell 0.2.0
+For a list of available command type: help
+> generate
+> print
+    5 | 3     |   7
+    6 |       |
+  7   | 8 5   | 3
+------+-------+------
+4     |     2 | 8
+3     |   7   | 6   9
+      |       | 4
+------+-------+------
+      |       | 5
+5 6 2 |     8 |
+  8   |     3 | 9   6
+> exit
+```
+
+### Creating new sudokus
+```
+#!/usr/bin/env sudokutools
+# Generate 3 sudokus and their solutions and print them.
+loop 3
+  generate
+  encode
+  solve
+  encode
+loop end
+```
+
+Output:
+```
+009070630000056000700200008000507060201000400000090010030000104490300050000000000
+529874631843156927716239548984517263251683479367492815635728194498361752172945386
+052600700000450001008000000610080002000000010030000400000000020080097003700002106
+452619738973458261168723954614985372829374615537261489391546827286197543745832196
+008000700500040000670000109203010070000900400000050000080090000300500600040806030
+938165742512749863674382159293614578851937426467258391786493215329571684145826937
+```
+
+### Using the stack
+In the above example sudokus and solutions are mixed in the output. The
+sudokutools shell provides a stack on which you can push sudokus in order
+to work on multiple sudokus. In this example we first generate and print
+3 sudokus while pushing them the stack in order to recall them later to
+print their solutions:
+```
+#!/usr/bin/env sudokutools
+# Generate 3 sudokus and their solutions and print them sorted.
+loop 3
+  generate
+  encode
+  push
+loop end
+
+loop 3
+  pop 0
+  solve
+  encode
+loop end
+```
+
+Output:
+```
+009070630000056000700200008000507060201000400000090010030000104490300050000000000
+052600700000450001008000000610080002000000010030000400000000020080097003700002106
+008000700500040000670000109203010070000900400000050000080090000300500600040806030
+529874631843156927716239548984517263251683479367492815635728194498361752172945386
+452619738973458261168723954614985372829374615537261489391546827286197543745832196
+938165742512749863674382159293614578851937426467258391786493215329571684145826937
+```
+
+### Commandline usage
+You don't need to write your sudokutools shell scripts into separate files -
+the shell can read commands from standard input as well. Even more convenient
+is the use of the ``sudokutools -c`` commandline argument. The following
+line will do the same job as the first loop example:
+
+```sh
+$ sudokutools -c "loop 3; generate; encode; solve; encode; loop end"
+```
 
 ## Road map and changelog
 
-### Version 0.2 (in development)
+### Version 0.3.0 (planned)
 #### Features (planned):
+* Play mode for the sudokutools shell.
+* More solving strategies (X-Wing, ...)
+* Support for different sudoku sizes (4x4, 16x16, ...)
+
+### Version 0.2.0 (current)
+#### Features:
 * More printing: print the candidates of sudokus
-* Different solving strategies, which can be used to learn solving sudokus
-* Commandline interface to sudokutools
+* Different solving strategies, which can be used to learn solving sudokus in
+  ``sudokutools.solvers``:
+  * Naked singles, naked tuples (pairs, triples, ...)
+  * Hidden singles, hidden tuples (pairs, triples, ...)
+  * Bruteforce
+* Added the sudokutools shell: A commandline interface to sudokutools
 * Creating sudokus from pattern templates (like the one at the top of the README)
 
 #### Changes:
-* **API change:** The method signature of ``Sudoku.remove_candidates()`` in
-  the ``sudokutools.sudoku`` module has been changed to be consistent with
-  the signature of ``Sudoku.set_candidates()``:
+* Added module ``sudokutools.printing`` to print sudoku candidates.
+* Added module ``sudokutools.shell`` which provides the sudokutools shell.
+* Added module ``sudokutools.solvers`` with high-level solving classes.
+* Module ``sudokutools.generate``:
+  * New function ``generate_from_template()``
+* Module ``sudokutools.solve``:
+  * **API change:** The ``bruteforce()`` function has been changed.
+    The ``reverse`` argument has been removed and it now yields all possible
+    solutions.
+* Module ``sudokutools.sudoku``:
+  * **API change:** The method signature of ``Sudoku.remove_candidates()`` in
+  has been changed to be consistent with the signature of
+  ``Sudoku.set_candidates()``
+  * New method ``Sudoku.set_number()``
+* Fixed multiple bugs.
 
-  ```python
-  Sudoku.remove_candidates(self, row, col, *candidates)
-  Sudoku.remove_candidates(self, row, col, value)
-  ```
-  You have to change your code, if you used ``Sudoku.remove_candidates()``.
 
-
-### Version 0.1.1 (current)
+### Version 0.1.1
 #### Changes:
 * Added tests to pypi package.
 * Minor additional packaging changes.
