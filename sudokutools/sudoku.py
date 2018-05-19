@@ -55,7 +55,11 @@ class Sudoku(object):
     """
 
     def __init__(self, size=(3, 3)):
-        """Create a new empty sudoku."""
+        """Create a new empty sudoku.
+
+        Args:
+            size ((int, int)): box_width, box_height for the new sudoku.
+        """
         try:
             self.size = tuple(size)
             self.width = size[0]
@@ -208,16 +212,12 @@ class Sudoku(object):
         self.__numbers[row][col] = value
 
     def __len__(self):
-        """Return the number of non-empty fields in this sudoku.
+        """Return the number of fields in this sudoku.
 
         Returns:
-            int: The number of non-empty fields within this sudoku.
+            int: The number of fields in this sudoku.
         """
-        count = 0
-        for row, col in self:
-            if self.__numbers[row][col]:
-                count += 1
-        return count
+        return self.width ** 2 * self.height ** 2
 
     def get_number(self, row, col):
         """Same as sudoku[row, col]."""
@@ -305,8 +305,13 @@ class Sudoku(object):
         Args:
             s (str): A string representing the sudoku (see below).
             empty (char): A character representing empty fields.
+            sudoku_sep (char): A character, which separates field information
+                               from candidate information.
             candidate_sep (char): A character separating the candidate lists.
-            size (int, int):
+            size (int, int): (width, height) of the new sudoku. If not given
+                             This will be calculated automatically, which
+                             may lead to wrong results. (It will always
+                             work as intended if width == height.)
 
         Returns:
             Sudoku: The newly created sudoku.
@@ -453,16 +458,51 @@ class Sudoku(object):
             list of (int, int): list of pairs (row, column) of all fields in
                                 the same box (region).
         """
-        width, height = self.size
-        grid_x = col - (col % width)
-        grid_y = row - (row % height)
+        grid_x = col - (col % self.width)
+        grid_y = row - (row % self.height)
 
         coords = [(grid_y + i, grid_x + j)
-                  for i in range(height) for j in range(width)]
+                  for i in range(self.height) for j in range(self.width)]
         if not include:
             coords.remove((row, col))
         return coords
 
+    def surrounding_of(self, row, col, include=True):
+        """Return all surrounding coordinates of (col, row) as a list.
+
+        Args:
+            row (int): The row of the field.
+            col (int): The column of the field.
+            include (bool): Whether or not to include (row, col).
+
+        Returns:
+            list of (int, int): list of pairs (row, column) of all fields in
+                                the same column, row or square.
+        """
+        coords = self.row_of(row, col, include=include)
+        coords.extend(self.column_of(row, col, include=include))
+        coords.extend(self._quad_without_row_and_column_of(row, col))
+
+        # remove two items of (col, row) in coords (there are three)
+        if include:
+            coords.remove((row, col))
+
+        return coords
+
+    def _quad_without_row_and_column_of(self, row, col):
+        """Return some coordinates in the square of (col, row) as a list.
+
+        The coordinates in the same row and column are removed.
+
+        This is an internal function and should not be used
+        outside of the sudoku module.
+        """
+        grid_x = col - (col % self.width)
+        grid_y = row - (row % self.height)
+
+        return [(grid_y + i, grid_x + j) for i, j in product(
+                range(self.height), range(self.width))
+                if grid_y + i != row and grid_x + j != col]
 
 
 def column_of(row, col, include=True):

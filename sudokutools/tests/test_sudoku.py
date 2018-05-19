@@ -1,9 +1,7 @@
 from itertools import product
 from unittest import TestCase
 
-from sudokutools.sudoku import (
-    INDICES, NUMBERS, Sudoku, column_of, row_of, square_of, surrounding_of
-)
+from sudokutools.sudoku import Sudoku
 
 EXAMPLE = """003020600
 900305001
@@ -80,15 +78,37 @@ CANDIDATES_EXAMPLE = """
 46,4679,4579,4,1478,47,378,24678,2467
 """
 
+TEST_SIZES = ((2, 2), (2, 3), (2, 4), (3, 3), (4, 4), (7, 8))
+
+SURROUNDING_OF_EXAMPLES = [
+    # size, (row, col), coords
+    (
+        (3, 2), (1, 1),
+        (
+            (0, 0), (0, 1), (0, 2), (1, 0),
+            (1, 1), (1, 2), (1, 3), (1, 4), (1, 5),
+            (2, 1), (3, 1), (4, 1), (5, 1)
+        )
+     ),
+]
 
 class SudokuTests(TestCase):
     def test_init(self):
-        """A new sudoku consists of 81 zeros and no candidates."""
-        sudoku = Sudoku()
+        """A new sudoku consists only of zeros and no candidates."""
+        for width, height in TEST_SIZES:
+            sudoku = Sudoku(size=(width, height))
+            count = 0
+            for row, col in sudoku:
+                count += 1
+                self.assertEqual(sudoku[row, col], 0)
+                self.assertEqual(sudoku.get_candidates(row, col), set())
+            self.assertEqual(count, width**2 * height**2, str((width, height)))
 
-        for row, col in product(range(9), repeat=2):
-            self.assertEqual(sudoku[row, col], 0)
-            self.assertEqual(sudoku.get_candidates(row, col), set())
+    def test_len(self):
+        """A sudoku of size=(width, height) has width**2 * height**2 fields."""
+        for width, height in TEST_SIZES:
+            sudoku = Sudoku(size=(width, height))
+            self.assertEqual(width**2 * height**2, len(sudoku))
 
     def test_decode_valid(self):
         """A sudoku is decoded correctly from a valid string."""
@@ -110,7 +130,7 @@ class SudokuTests(TestCase):
         sudoku = Sudoku.decode(CANDIDATES_EXAMPLE)
         self.assertEqual(sudoku.get_candidates(0, 1), {4, 5, 7, 8})
 
-        for row, col in product(INDICES, repeat=2):
+        for row, col in sudoku:
             self.assertNotEqual(sudoku.get_candidates(row, col), {})
 
     def test_decode_length_4(self):
@@ -184,7 +204,7 @@ class SudokuTests(TestCase):
         sudoku = Sudoku.decode(EXAMPLE)
 
         d = {}
-        for row, col in product(INDICES, repeat=2):
+        for row, col in sudoku:
             d[row, col] = sudoku[row, col]
 
         self.assertEqual(sudoku, d)
@@ -195,7 +215,7 @@ class SudokuTests(TestCase):
         sudoku = Sudoku.decode(EXAMPLE)
 
         d = {}
-        for row, col in product(INDICES, repeat=2):
+        for row, col in sudoku:
             d[row, col] = sudoku[row, col]
 
         d[0, 0] -= 1
@@ -247,7 +267,7 @@ class SudokuTests(TestCase):
 class CoordTests(TestCase):
     def test_row_of(self):
         """row_of() returns all fields of a row and no other."""
-        for width, height in (3, 3), (2, 2), (4, 2):
+        for width, height in TEST_SIZES:
             sudoku = Sudoku(size=(width, height))
 
             for row, col in sudoku:
@@ -263,45 +283,64 @@ class CoordTests(TestCase):
 
     def test_column_of(self):
         """column_of() returns all fields of a column and no other."""
-        for row, col in product(INDICES, repeat=2):
-            coords = column_of(row, col, include=True)
-            self.assertEqual(len(coords), len(NUMBERS))
+        for width, height in TEST_SIZES:
+            sudoku = Sudoku(size=(width, height))
 
-            for i in INDICES:
-                self.assertIn((i, col), coords)
+            for row, col in sudoku:
+                coords = sudoku.column_of(row, col, include=True)
+                self.assertEqual(len(coords), len(sudoku.numbers))
 
-            coords = column_of(row, col, include=False)
-            self.assertEqual(len(coords), len(NUMBERS)-1)
-            self.assertNotIn((row, col), coords)
+                for i in sudoku.indices:
+                    self.assertIn((i, col), coords)
 
-    def test_square_of(self):
-        """square_of() returns all fields of a square and no other."""
-        for row, col in product(INDICES, repeat=2):
-            coords = square_of(row, col, include=True)
-            self.assertEqual(len(coords), len(NUMBERS))
+                coords = sudoku.column_of(row, col, include=False)
+                self.assertEqual(len(coords), len(sudoku.numbers)-1)
+                self.assertNotIn((row, col), coords)
 
-            start_row = row - (row % 3)
-            start_col = col - (col % 3)
-            for i, j in product(range(3), repeat=2):
-                self.assertIn((start_row + i, start_col + j), coords)
+    def test_region_of(self):
+        """region_of() returns all fields of a square and no other."""
+        for width, height in TEST_SIZES:
+            sudoku = Sudoku(size=(width, height))
 
-            coords = column_of(row, col, include=False)
-            self.assertEqual(len(coords), len(NUMBERS)-1)
-            self.assertNotIn((row, col), coords)
+            for row, col in sudoku:
+                coords = sudoku.region_of(row, col, include=True)
+                self.assertEqual(len(coords), len(sudoku.numbers))
+
+                start_row = row - (row % sudoku.height)
+                start_col = col - (col % sudoku.width)
+                for i in range(sudoku.height):
+                    for j in range(sudoku.width):
+                        self.assertIn((start_row + i, start_col + j), coords)
+
+                coords = sudoku.region_of(row, col, include=False)
+                self.assertEqual(len(coords), len(sudoku.numbers)-1)
+                self.assertNotIn((row, col), coords)
 
     def test_surrounding_of(self):
         """surrounding_of() returns all surrounding fields and no other."""
-        for row, col in product(INDICES, repeat=2):
-            coords = surrounding_of(row, col, include=True)
-            self.assertEqual(len(coords), 9 + 6 + 6)
+        for width, height in TEST_SIZES:
+            sudoku = Sudoku(size=(width, height))
 
-            for i, j in row_of(row, col, include=True):
-                self.assertIn((i, j), coords)
-            for i, j in column_of(row, col, include=True):
-                self.assertIn((i, j), coords)
-            for i, j in square_of(row, col, include=True):
-                self.assertIn((i, j), coords)
+            for row, col in sudoku:
+                coords = sudoku.surrounding_of(row, col, include=True)
+                count = 3 * sudoku.width * sudoku.height
+                count -= (sudoku.width + sudoku.height)
+                self.assertEqual(len(coords), count, str((width, height)))
 
-            coords = surrounding_of(row, col, include=False)
-            self.assertEqual(len(coords), 9 + 6 + 6 - 1)
-            self.assertNotIn((row, col), coords)
+                for i, j in sudoku.row_of(row, col, include=True):
+                    self.assertIn((i, j), coords)
+                for i, j in sudoku.column_of(row, col, include=True):
+                    self.assertIn((i, j), coords)
+                for i, j in sudoku.region_of(row, col, include=True):
+                    self.assertIn((i, j), coords)
+
+                coords = sudoku.surrounding_of(row, col, include=False)
+                self.assertEqual(len(coords), count - 1)
+                self.assertNotIn((row, col), coords)
+
+    def test_surrounding_of_examples(self):
+        """surrounding_of() returns the right coords for a given example."""
+        for (width, height), (row, col), coords in SURROUNDING_OF_EXAMPLES:
+            sudoku = Sudoku(size=(width, height))
+            self.assertEqual(
+                sorted(sudoku.surrounding_of(row, col)), sorted(coords))
