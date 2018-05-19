@@ -4,7 +4,7 @@ from unittest import TestCase
 from sudokutools.solve import (
     bruteforce, find_conflicts, is_unique, calc_candidates, init_candidates
 )
-from sudokutools.sudoku import Sudoku, INDICES
+from sudokutools.sudoku import Sudoku
 
 SOLVE_EXAMPLES = [
     ("""
@@ -71,6 +71,21 @@ SOLVE_EXAMPLES = [
     698745321
     427913586
     """),
+    ("""
+    123456
+    630001
+    500002
+    462513
+    314625
+    251364
+    """, """
+    123456
+    635241
+    546132
+    462513
+    314625
+    251364
+    """)
 ]
 
 CONFLICT_EXAMPLE = """
@@ -155,7 +170,7 @@ class CandidatesTest(TestCase):
         sudoku1 = Sudoku.decode(CANDIDATES_EXAMPLE)
         sudoku2 = sudoku1.copy(include_candidates=False)
 
-        for row, col in product(INDICES, repeat=2):
+        for row, col in sudoku1:
             self.assertEqual(sudoku2.get_candidates(row, col), set())
             candidates = calc_candidates(sudoku2, row, col)
             self.assertEqual(sudoku1.get_candidates(row, col), candidates)
@@ -165,7 +180,7 @@ class CandidatesTest(TestCase):
         sudoku1 = Sudoku.decode(CANDIDATES_EXAMPLE)
         sudoku2 = sudoku1.copy()
         init_candidates(sudoku2)
-        for row, col in product(INDICES, repeat=2):
+        for row, col in sudoku1:
             c1 = sudoku1.get_candidates(row, col)
             c2 = sudoku2.get_candidates(row, col)
             self.assertEqual(c1, c2)
@@ -176,7 +191,7 @@ class CandidatesTest(TestCase):
         sudoku2 = sudoku1.copy()
         init_candidates(sudoku2)
 
-        for row, col in product(INDICES, repeat=2):
+        for row, col in sudoku1:
             value = sudoku1[row, col]
             if value:
                 self.assertEqual(sudoku2.get_candidates(row, col), {value})

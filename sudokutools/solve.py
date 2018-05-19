@@ -10,7 +10,7 @@ Functions defined here:
 
 from itertools import product
 
-from sudokutools.sudoku import INDICES, NUMBERS, surrounding_of
+# from sudokutools.sudoku import INDICES, NUMBERS, surrounding_of
 
 
 def calc_candidates(sudoku, row, col):
@@ -27,9 +27,9 @@ def calc_candidates(sudoku, row, col):
     """
     if sudoku[row, col]:
         return {sudoku[row, col]}
-    candidates = set(NUMBERS)
+    candidates = set(sudoku.numbers)
 
-    for (i, j) in surrounding_of(row, col, include=False):
+    for (i, j) in sudoku.surrounding_of(row, col, include=False):
         candidates.discard(sudoku[i, j])
 
     return candidates
@@ -45,7 +45,7 @@ def init_candidates(sudoku):
         sudoku (Sudoku): The :class:`Sudoku` instance for which the
                          candidates are calculated.
     """
-    for row, col in product(INDICES, repeat=2):
+    for row, col in sudoku:
         sudoku.set_candidates(row, col, calc_candidates(sudoku, row, col))
 
 
@@ -86,7 +86,7 @@ def _do_bruteforce(sudoku):
 
         # save a copy of the candidates in fields, which will be changed
         saved_candidates = {(row, col): set(sudoku.get_candidates(row, col))}
-        for (i, j) in surrounding_of(row, col, include=False):
+        for (i, j) in sudoku.surrounding_of(row, col, include=False):
             saved_candidates[(i, j)] = set(sudoku.get_candidates(i, j))
             sudoku.remove_candidates(i, j, {candidate})
 
@@ -115,14 +115,14 @@ def find_conflicts(sudoku, *coords):
         the fields (2, 3) and (2, 6) because both of them contain a 2.
     """
     if not coords:
-        coords = product(INDICES, repeat=2)
+        coords = list(sudoku)
 
     for row, col in coords:
         value = sudoku[row, col]
         if not value:
             continue
         else:
-            for (i, j) in surrounding_of(row, col, include=False):
+            for (i, j) in sudoku.surrounding_of(row, col, include=False):
                 if sudoku[i, j] == value:
                     yield ((row, col), (i, j), value)
 
