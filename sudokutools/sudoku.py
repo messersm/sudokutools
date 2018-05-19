@@ -90,6 +90,24 @@ class Sudoku(object):
             if not self.__numbers[row][col]:
                 yield row, col
 
+    def filled(self):
+        """Iterate through the coordinates of filled fields.
+
+        Yields:
+            (int, int): row and column of the next filled field.
+        """
+        for row, col in self:
+            if self.__numbers[row][col]:
+                yield row, col
+
+    def count(self):
+        """Return the number of filled fields.
+
+        Returns:
+            int: number of filled fields.
+        """
+        return len(list(self.filled()))
+
     def diff(self, other):
         """Iterate through coordinates with different values in other.
 
