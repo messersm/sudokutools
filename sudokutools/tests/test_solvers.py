@@ -1,10 +1,11 @@
 from unittest import TestCase
 
+from sudokutools.generate import generate
 from sudokutools.solve import init_candidates
 from sudokutools.solvers import (
     NakedSingle, NakedPair, NakedTriple, NakedQuad, NakedQuint,
     HiddenSingle, HiddenPair, HiddenTriple, HiddenQuad, HiddenQuint,
-    Bruteforce
+    Bruteforce, SOLVE_STEPS
 )
 from sudokutools.sudoku import Sudoku
 
@@ -59,6 +60,8 @@ FIRST_STEPS = [
     Bruteforce(0, 0, 1),
 ]
 
+TEST_SIZES = ((2, 2), (2, 3), (2, 4), (3, 3), (4, 4))
+
 
 class StepTests(TestCase):
     def test_first(self):
@@ -68,3 +71,16 @@ class StepTests(TestCase):
             cls = first.__class__
             steps = sorted(cls.find(sudoku))[:1]
             self.assertEqual(steps, [first], cls.__name__)
+
+    def test_sizes(self):
+        """Finding solve steps doesn't raise an exception on different sizes."""
+        for width, height in TEST_SIZES:
+            count = (width ** 2 * height ** 2) // 2
+            sudoku = generate(min_count=count, size=(width, height))
+
+            for cls in SOLVE_STEPS:
+                try:
+                    steps = list(cls.find(sudoku))
+                except Exception as e:
+                    self.fail("%s.find() failed with: %s" %(
+                        cls.__name__, str(e)))
