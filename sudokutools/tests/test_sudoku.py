@@ -78,7 +78,7 @@ CANDIDATES_EXAMPLE = """
 46,4679,4579,4,1478,47,378,24678,2467
 """
 
-TEST_SIZES = ((2, 2), (2, 3), (2, 4), (3, 3), (4, 4), (7, 8))
+TEST_SIZES = ((2, 2), (2, 3), (2, 4), (3, 3), (4, 4))
 
 SURROUNDING_OF_EXAMPLES = [
     # size, (row, col), coords

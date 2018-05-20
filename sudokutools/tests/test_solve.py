@@ -133,6 +133,8 @@ CANDIDATES_EXAMPLE = """
 46,4679,5,4,1,47,3,24678,2467
 """
 
+TEST_SIZES = ((2, 2), (2, 3), (2, 4), (3, 3), (4, 4))
+
 
 class BruteforceTests(TestCase):
     def test_examples(self):
@@ -213,6 +215,17 @@ class AnalyzeTests(TestCase):
         self.assertEqual(next(conflicts), ((1, 2), (1, 8), 1))
         self.assertEqual(next(conflicts), ((1, 2), (2, 2), 1))
         self.assertRaises(StopIteration, next, conflicts)
+
+    def test_find_conflicts_sizes(self):
+        """find_conflicts works with different sudoku sizes."""
+
+        for size in TEST_SIZES:
+            sudoku = Sudoku(size=size)
+            self.assertEqual(list(find_conflicts(sudoku)), [])
+
+        for example, solution in SOLVE_EXAMPLES:
+            sudoku = Sudoku.decode(example)
+            self.assertEqual(list(find_conflicts(sudoku)), [])
 
     def test_find_conflicts(self):
         """If a sudoku has no conflicts, none are found."""

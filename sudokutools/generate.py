@@ -3,51 +3,56 @@
 Functions defined here:
  * create_solution(): Create a complete sudoku without conflicts.
  * generate(): Create a new sudoku.
+ * generate_from_template(): Create a new sudoku given a template pattern.
 """
 
-from itertools import product
-from random import shuffle
+from random import sample, shuffle
 
 from sudokutools.solve import bruteforce, is_unique
-from sudokutools.sudoku import INDICES, NUMBERS, Sudoku, square_of
+from sudokutools.sudoku import Sudoku
 
 SYMMETRY = {
-    None: lambda r, c: [(r, c)],
-    "rotate-90": lambda r, c: [(r, c), (8-c, r), (8-r, 8-c), (c, 8-r)],
-    "rotate-180": lambda r, c: [(r, c), (8-r, 8-c)],
-    "mirror-x": lambda r, c: [(r, c), (8-r, c)],
-    "mirror-y": lambda r, c: [(r, c,), (r, 8-c)],
-    "mirror-xy": lambda r, c: [(r, c), (8-r, c), (r, 8-c), (8-r, 8-c)]
+    None: lambda w, h, r, c: [(r, c)],
+    "rotate-90": lambda w, h, r, c: [(r, c), (w*h-1-c, r), (w*h-1-r, w*h-1-c), (c, w*h-1-r)],
+    "rotate-180": lambda w, h, r, c: [(r, c), (w*h-1-r, w*h-1-c)],
+    "mirror-x": lambda w, h, r, c: [(r, c), (w*h-1-r, c)],
+    "mirror-y": lambda w, h, r, c: [(r, c,), (r, w*h-1-c)],
+    "mirror-xy": lambda w, h, r, c: [(r, c), (w*h-1-r, c), (r, w*h-1-c), (w*h-1-r, w*h-1-c)]
 }
 
 
-def create_solution():
+def create_solution(size=(3, 3)):
     """Returns a sudoku, without empty or conflicting fields.
+    
+    Args:
+        size (int, int): region_width and region_height of the filled sudoku.
 
     Returns:
         Sudoku: The completely filled Sudoku instance.
     """
-    sudoku = Sudoku()
+    sudoku = Sudoku(size=size)
 
-    cols = [0, 3, 6]
-    shuffle(cols)
+    # Create a list of numbers and shuffle them.
+    numbers = list(sudoku.numbers)
+    shuffle(numbers)
 
-    c = 0
-    for i in (0, 1, 2):
-        row = i * 3
-        col = cols[i]
+    columns = sample(range(sudoku.width * sudoku.height), sudoku.width)
 
-        numbers = list(NUMBERS)
-        shuffle(numbers)
+    offset = 0
+    for col in columns:
+        for i, j in sudoku.column_of(0, col):
+            sudoku[i, j] = numbers[(offset + i) % len(numbers)]
+        offset += sudoku.height
 
-        for row, col in square_of(row, col):
-            sudoku[row, col] = numbers.pop()
-            c += 1
+    try:
+        return next(bruteforce(sudoku))
+    except StopIteration:
+        print("No solution found for:")
+        print(sudoku)
+        raise
 
-    return next(bruteforce(sudoku))
 
-
-def generate(min_count=17, symmetry=None):
+def generate(min_count=0, symmetry=None, size=(3, 3)):
     """Generate a sudoku and return it.
 
     Args:
@@ -60,22 +65,25 @@ def generate(min_count=17, symmetry=None):
                         Possible values are: None (no symmetry),
                         "rotate-90", "rotate-180", "mirror-x", "mirror-y"
                         and "mirror-xy".
+        size (int, int): region_width and region_height of the filled sudoku.
 
     Returns:
         Sudoku: The generated :class:`Sudoku` instance.
 
     Raises:
         ValueError, if symmetry is not a valid argument.
-        ValueError, if min_count > 81.
+        ValueError, if min_count is larger then len(sudoku).
     """
-    if min_count > 81:
-        raise ValueError("min_count must be <= 81 (%d was given)." % min_count)
+    count_limit = size[0]**2 * size[1]**2
+    if min_count > count_limit:
+        raise ValueError("min_count must be <= %d (%d was given)." % (
+            count_limit, min_count))
 
-    solution = create_solution()
+    solution = create_solution(size=size)
     sudoku = solution.copy()
-    coords = [(row, col) for row, col in product(INDICES, repeat=2)]
+    coords = list(sudoku)
     shuffle(coords)
-    count = 81
+    count = len(sudoku)
 
     try:
         symmetry_func = SYMMETRY[symmetry]
@@ -85,7 +93,7 @@ def generate(min_count=17, symmetry=None):
 
     while coords:
         # get next coordinates to change
-        step_coords = set(symmetry_func(*coords[0]))
+        step_coords = set(symmetry_func(sudoku.width, sudoku.height, *coords[0]))
 
         for row, col in step_coords:
             coords.remove((row, col))
@@ -165,10 +173,10 @@ def generate_from_template(template, tries=100):
     t = 0
 
     while t < tries or tries < 0:
-        solution = create_solution()
+        solution = create_solution(size=template.size)
         sudoku = solution.copy()
 
-        for row, col in product(INDICES, repeat=2):
+        for row, col in template:
             if not template[row, col]:
                 sudoku[row, col] = 0
 
