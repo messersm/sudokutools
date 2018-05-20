@@ -30,8 +30,7 @@ from functools import total_ordering
 from itertools import combinations, product
 
 from sudokutools.solve import calc_candidates, bruteforce
-from sudokutools.sudoku import column_of, row_of, square_of, surrounding_of, \
-    NUMBERS, INDICES, Sudoku
+from sudokutools.sudoku import Sudoku
 
 
 class Action(namedtuple("ActionTuple", ["func", "row", "col", "value"])):
@@ -119,7 +118,7 @@ class CalculateCandidates(SolveStep):
     """Calculates the candidates of fields."""
     @classmethod
     def find(cls, sudoku):
-        for row, col in product(INDICES, repeat=2):
+        for row, col in sudoku:
             # ignore fields with defined candidates
             if sudoku.get_candidates(row, col):
                 continue
@@ -163,7 +162,7 @@ class _SingleFieldStep(SolveStep):
         self.actions.append(
             Action(Sudoku.set_candidates, row, col, {value}))
 
-        for i, j in surrounding_of(row, col, include=False):
+        for i, j in sudoku.surrounding_of(row, col, include=False):
             if value in sudoku.get_candidates(i, j):
                 self.actions.append(
                     Action(Sudoku.remove_candidates, i, j, {value}))
@@ -201,9 +200,9 @@ class HiddenSingle(_SingleFieldStep):
         yielded_coords = []
 
         for row, col in sudoku.empty():
-            for f in column_of, row_of, square_of:
+            for f in sudoku.column_of, sudoku.row_of, sudoku.region_of:
                 found_hidden_single = False
-                candidates = set(NUMBERS)
+                candidates = set(sudoku.numbers)
                 for i, j in f(row, col, include=False):
                     candidates -= sudoku.get_candidates(i, j)
 
@@ -264,7 +263,7 @@ class NakedTuple(SolveStep):
 
         # we work through rows, cols and quads in 3 steps, since the
         # empty fields can changed in-between
-        for func in row_of, column_of, square_of:
+        for func in sudoku.row_of, sudoku.column_of, sudoku.region_of:
             clist = []
             for (row, col) in sudoku.empty():
                 coords = func(row, col)
@@ -329,7 +328,7 @@ class HiddenTuple(SolveStep):
 
         # we work through rows, cols and quads in 3 steps, since the
         # empty fields can changed in-between
-        for func in row_of, column_of, square_of:
+        for func in sudoku.row_of, sudoku.column_of, sudoku.region_of:
             clist = []
             for (i, j) in sudoku.empty():
                 coords = func(i, j)
@@ -344,13 +343,13 @@ class HiddenTuple(SolveStep):
         cand_coords = defaultdict(lambda: set())
 
         # build coordinate list for each candidate
-        for cand in NUMBERS:
+        for cand in sudoku.numbers:
             for (row, col) in coords:
                 if cand in sudoku.get_candidates(row, col):
                     cand_coords[cand].add((row, col))
 
         # create a list of numbers with at most n occurrences
-        n_times = [c for c in NUMBERS if 1 < len(cand_coords[c]) <= cls.n]
+        n_times = [c for c in sudoku.numbers if 1 < len(cand_coords[c]) <= cls.n]
 
         # select n numbers from the n_times list
         for numbers in combinations(n_times, cls.n):
