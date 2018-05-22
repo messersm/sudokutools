@@ -173,30 +173,50 @@ class Sudoku(object):
         Returns:
             str: String representing the sudoku.
         """
-        s = ""
+        max_length = max([len(str(n)) for n in self.numbers])
+        col_sep = " "
+        row_sep = "\n"
+        empty = " "
+        rjust = True
 
-        for rc, row in enumerate(self.indices):
-            col_str = []
-            for cc, col in enumerate(self.indices):
-                val = str(self[row, col])
-                if val == "0":
-                    val = " "
-                col_str.append(val)
+        lines = []
 
-                if cc % self.width == self.width - 1 and cc < len(self.numbers) - 1:
-                    col_str.append("|")
+        for row in range(self.width * self.height):
+            offset = 0
+            row_str = []
 
-            s += " ".join(col_str)
+            for _ in range(self.height):
+                numbers = []
 
-            if rc < len(self.numbers) - 1:
-                s += "\n"
+                for col in range(offset, offset+self.width):
+                    value = self[row, col]
+                    if value == 0:
+                        value = empty
+                    else:
+                        value = str(value)
 
-            if (rc + 1) % self.height == 0 and rc < len(self.numbers) - 1:
-                row_sep = "+".join(["-" * (self.width * 2 + 1)
-                                    for _ in range(self.height)])
+                    if rjust:
+                        numbers.append(value.rjust(max_length))
+                    else:
+                        numbers.append(value)
 
-                s += row_sep[1:-1] + "\n"
-        return s
+                row_str.append(col_sep.join(numbers))
+                offset += self.width
+
+            lines.append(" | ".join(row_str))
+
+        all_lines = []
+        for i, line in enumerate(lines):
+            if i % self.height == 0 and i > 0:
+                s = "-" * len(line)
+                for j, c in enumerate(line):
+                    if c == "|":
+                        s = s[:j] + "+" + s[j+1:]
+                all_lines.append(s)
+
+            all_lines.append(line)
+
+        return row_sep.join(all_lines)
 
     def __getitem__(self, key):
         """Return the number in the field referenced by key.
@@ -317,7 +337,7 @@ class Sudoku(object):
         return s
 
     @classmethod
-    def decode(cls, s, empty="0", sudoku_sep="|", candidate_sep=",", size=None):
+    def decode(cls, s, empty="0", number_sep=None, sudoku_sep="|", candidate_sep=",", size=None):
         """Create a new sudoku from the string s.
 
         Args:
@@ -363,21 +383,37 @@ class Sudoku(object):
         This is the default format, which encode() uses and no other
         format is supported right now.
         """
-        if sudoku_sep in s:
-            s, c_str = s.split(sudoku_sep, 1)
+        # remove leading and trailing whitespace
+        s = s.strip()
+
+        # remove all unused whitespace
+        if number_sep is None:
+            special = empty + sudoku_sep + candidate_sep
         else:
-            c_str = ""
+            special = empty + sudoku_sep + candidate_sep + number_sep
+
+        for c in whitespace:
+            if c not in special:
+                if number_sep:
+                    s = s.replace(c, number_sep)
+                else:
+                    s = s.replace(c, "")
+
+        if sudoku_sep in s:
+            sudoku_str, candidate_str = s.split(sudoku_sep, 1)
+        else:
+            sudoku_str = s
+            candidate_str = ""
 
         # try to get size automatically:
         if size is None:
-            s1 = s[:]
-            for c in whitespace:
-                if c == empty:
-                    continue
-                s1 = s1.replace(c, '')
+            if number_sep:
+                count = len(sudoku_str.split(number_sep))
+            else:
+                count = len(sudoku_str)
 
-            count = len(s1)
             length = count**0.5
+
             if not length.is_integer():
                 raise ValueError("Invalid number of fields given " +
                                  "(must be square number): %d" % count)
@@ -400,13 +436,17 @@ class Sudoku(object):
         col = 0
         row = 0
 
-        for item in s:
+        if number_sep:
+            items = sudoku_str.split(number_sep)
+        else:
+            items = sudoku_str
+
+        for item in items:
             if item is empty:
                 sudoku[row, col] = 0
-            elif item in whitespace:
-                continue
+            else:
+                sudoku[row, col] = int(item)
 
-            sudoku[row, col] = int(item)
             col += 1
             if col >= sudoku.width * sudoku.height:
                 row += 1
@@ -414,19 +454,20 @@ class Sudoku(object):
             if row >= sudoku.width * sudoku.height:
                 break
 
-        # read candidates
-        for c in whitespace:
-            c_str = c_str.replace(c, '')
-        c_str = c_str.split(candidate_sep)
+        # read candidates if any
+        if not candidate_str:
+            return sudoku
 
         col = 0
         row = 0
 
-        for c in c_str:
-            if c in whitespace:
-                continue
-
-            sudoku.set_candidates(row, col, set([int(item) for item in c]))
+        for c in candidate_str.split(candidate_sep):
+            c = c.strip()
+            if number_sep:
+                candidates = [int(item) for item in c.split(number_sep)]
+            else:
+                candidates = [int(item) for item in c]
+            sudoku.set_candidates(row, col, candidates)
             col += 1
             if col == sudoku.width * sudoku.height:
                 col = 0

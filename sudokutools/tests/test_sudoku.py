@@ -3,7 +3,8 @@ from unittest import TestCase
 
 from sudokutools.sudoku import Sudoku
 
-EXAMPLE = """003020600
+EXAMPLE = """
+003020600
 900305001
 001806400
 008102900
@@ -40,9 +41,50 @@ EXAMPLE_4_STR = """
 3   |   4
     | 1 3"""
 
+EXAMPLE_16 = """
+0 4 9 6 1 0 12 0 8 0 14 0 0 0 2 3
+0 5 0 7 3 2 8 16 9 0 15 11 12 10 4 13
+0 8 0 15 0 0 10 11 2 5 1 0 16 6 9 7
+10 11 2 3 7 9 6 15 13 16 0 0 0 0 8 0
+7 0 5 14 8 6 0 12 15 2 3 0 1 11 0 9
+8 16 1 4 0 7 15 14 0 13 11 0 3 12 6 2
+15 3 11 13 2 1 5 10 6 9 0 7 4 16 14 0
+9 12 6 2 13 11 0 4 14 1 8 16 0 5 10 15
+0 14 7 9 15 12 0 0 11 0 10 2 8 0 16 6
+0 2 15 8 10 16 1 0 12 4 0 13 9 3 11 0
+11 1 10 12 6 0 13 9 16 8 7 14 2 4 0 5
+0 6 3 16 14 8 11 2 0 15 9 1 13 0 0 10
+2 7 16 0 11 4 14 0 1 10 13 9 15 8 3 12
+0 15 4 1 0 13 7 8 3 0 2 6 10 9 5 0
+3 13 12 10 16 15 9 1 4 14 5 8 6 2 7 11
+6 9 8 0 0 10 2 0 7 12 16 0 14 13 1 4
+"""
+
+EXAMPLE_16_STR = """
+    4  9  6 |  1    12    |  8    14    |        2  3
+    5     7 |  3  2  8 16 |  9    15 11 | 12 10  4 13
+    8    15 |       10 11 |  2  5  1    | 16  6  9  7
+10 11  2  3 |  7  9  6 15 | 13 16       |        8   
+------------+-------------+-------------+------------
+ 7     5 14 |  8  6    12 | 15  2  3    |  1 11     9
+ 8 16  1  4 |     7 15 14 |    13 11    |  3 12  6  2
+15  3 11 13 |  2  1  5 10 |  6  9     7 |  4 16 14   
+ 9 12  6  2 | 13 11     4 | 14  1  8 16 |     5 10 15
+------------+-------------+-------------+------------
+   14  7  9 | 15 12       | 11    10  2 |  8    16  6
+    2 15  8 | 10 16  1    | 12  4    13 |  9  3 11   
+11  1 10 12 |  6    13  9 | 16  8  7 14 |  2  4     5
+    6  3 16 | 14  8 11  2 |    15  9  1 | 13       10
+------------+-------------+-------------+------------
+ 2  7 16    | 11  4 14    |  1 10 13  9 | 15  8  3 12
+   15  4  1 |    13  7  8 |  3     2  6 | 10  9  5   
+ 3 13 12 10 | 16 15  9  1 |  4 14  5  8 |  6  2  7 11
+ 6  9  8    |    10  2    |  7 12 16    | 14 13  1  4"""
+
 # Remove newline at start
 EXAMPLE_STR = EXAMPLE_STR[1:]
 EXAMPLE_4_STR = EXAMPLE_4_STR[1:]
+EXAMPLE_16_STR = EXAMPLE_16_STR[1:]
 
 # empty fields of the sudoku above
 EMPTY = [
@@ -138,6 +180,12 @@ class SudokuTests(TestCase):
         sudoku = Sudoku.decode(EXAMPLE_4)
         self.assertEqual(str(sudoku), EXAMPLE_4_STR)
         self.assertEqual(sudoku.size, (2, 2))
+
+    def test_decode_length_16(self):
+        """A sudoku of dimensions 16x16 is decoded correctly."""
+        sudoku = Sudoku.decode(EXAMPLE_16, number_sep=" ")
+        self.assertEqual(str(sudoku), EXAMPLE_16_STR)
+        self.assertEqual(sudoku.size, (4, 4))
 
     def test_encode(self):
         """A sudoku is encoded to a valid string."""
