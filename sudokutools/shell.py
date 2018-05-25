@@ -10,9 +10,8 @@ from collections import namedtuple
 
 from sudokutools import __version__
 from sudokutools.generate import generate, generate_from_template
-from sudokutools.printing import view
 from sudokutools.solve import bruteforce, init_candidates
-from sudokutools.sudoku import Sudoku
+from sudokutools.sudoku import Sudoku, view
 
 if sys.version_info[0] <= 2:
     input = raw_input

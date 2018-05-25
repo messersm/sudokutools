@@ -4,17 +4,11 @@ Classes defined here:
  * Sudoku: Represents a sudoku.
 
 Functions defined here:
- * column_of(): Returns all coordinates in the column of a given field.
- * row_of(): Returns all coordinates in the row of a given field.
- * square_of(): Returns all coordinates in the square of a given field.
- * surrounding_of(): Returns all surrounding coordinates of a given field.
+ * view(): Return sudoku (with candidates) as a human-readable string.
 """
 
 from itertools import product
 from string import whitespace
-
-INDICES = (0, 1, 2, 3, 4, 5, 6, 7, 8)
-NUMBERS = (1, 2, 3, 4, 5, 6, 7, 8, 9)
 
 
 class Sudoku(object):
@@ -173,50 +167,7 @@ class Sudoku(object):
         Returns:
             str: String representing the sudoku.
         """
-        max_length = max([len(str(n)) for n in self.numbers])
-        col_sep = " "
-        row_sep = "\n"
-        empty = " "
-        rjust = True
-
-        lines = []
-
-        for row in range(self.width * self.height):
-            offset = 0
-            row_str = []
-
-            for _ in range(self.height):
-                numbers = []
-
-                for col in range(offset, offset+self.width):
-                    value = self[row, col]
-                    if value == 0:
-                        value = empty
-                    else:
-                        value = str(value)
-
-                    if rjust:
-                        numbers.append(value.rjust(max_length))
-                    else:
-                        numbers.append(value)
-
-                row_str.append(col_sep.join(numbers))
-                offset += self.width
-
-            lines.append(" | ".join(row_str))
-
-        all_lines = []
-        for i, line in enumerate(lines):
-            if i % self.height == 0 and i > 0:
-                s = "-" * len(line)
-                for j, c in enumerate(line):
-                    if c == "|":
-                        s = s[:j] + "+" + s[j+1:]
-                all_lines.append(s)
-
-            all_lines.append(line)
-
-        return row_sep.join(all_lines)
+        return view(self, include_candidates=False)
 
     def __getitem__(self, key):
         """Return the number in the field referenced by key.
@@ -564,90 +515,111 @@ class Sudoku(object):
                 if grid_y + i != row and grid_x + j != col]
 
 
-def column_of(row, col, include=True):
-    """Return all coordinates in the column of (col, row) as a list.
+def view(
+        sudoku,
+        include_candidates=True, number_sep=None, candidate_prefix='*',
+        align_right=True):
+    """Return sudoku as a human-readable string.
 
     Args:
-        row (int): The row of the field.
-        col (int): The column of the field.
-        include (bool): Whether or not to include (row, col).
+        sudoku: The sudoku to represent.
+        include_candidates (bool): include candidates (or not)
+        number_sep (str): separator for candidates. If set to None, this
+                          set to ',', if there are numbers > 9 in the sudoku.
+                          Otherwise it will be the empty string.
+        candidate_prefix (str): A string preceding the candidates. This is
+                                used to mark output as candidates (for example
+                                to recognize naked singles).
+        align_right (bool): Align field content to the right
+                            (will be left-aligned, if set to False).
 
     Returns:
-        list of (int, int): list of pairs (row, column) of all fields in
-                            the same column.
+        str: String representing the sudoku.
+
+    Example::
+
+        >>> from sudokutools.solve import init_candidates
+        >>> from sudokutools.sudoku import Sudoku, view
+        >>> sudoku = Sudoku.decode('''
+        ... 003020600
+        ... 900305001
+        ... 001806400
+        ... 008102900
+        ... 700000008
+        ... 006708200
+        ... 002609500
+        ... 800203009
+        ... 005010300''')
+        >>> init_candidates(sudoku)
+        >>> print(view(sudoku)) # doctest: +NORMALIZE_WHITESPACE
+            *45   *4578       3 |     *49       2    *147 |       6   *5789     *57
+              9  *24678     *47 |       3     *47       5 |     *78    *278       1
+            *25    *257       1 |       8     *79       6 |       4  *23579   *2357
+        ------------------------+-------------------------+------------------------
+           *345    *345       8 |       1   *3456       2 |       9  *34567  *34567
+              7 *123459     *49 |    *459  *34569      *4 |      *1  *13456       8
+          *1345  *13459       6 |       7   *3459       8 |       2   *1345    *345
+        ------------------------+-------------------------+------------------------
+           *134   *1347       2 |       6    *478       9 |       5   *1478     *47
+              8   *1467     *47 |       2    *457       3 |     *17   *1467       9
+            *46   *4679       5 |      *4       1     *47 |       3  *24678   *2467
     """
-    return [(i, col) for i in INDICES if include or i != row]
 
+    max_length = max([len(str(n)) for n in sudoku.numbers])
+    if max_length > 1:
+        number_sep = ","
+    else:
+        number_sep = ""
 
-def row_of(row, col, include=True):
-    """Return all coordinates in the row of (col, row) as a list.
+    # In case, candidates aren't calculated yet, this gives a
+    # better representation.
+    max_field_length = max_length
 
-    Args:
-        row (int): The row of the field.
-        col (int): The column of the field.
-        include (bool): Whether or not to include (row, col).
+    if include_candidates:
+        # get the maximum field length with candidates
+        for row, col in sudoku:
+            length = len(number_sep.join(
+                [str(n) for n in sudoku.get_candidates(row, col)]))
+            length += len(candidate_prefix)
+            if length > max_field_length:
+                max_field_length = length
 
-    Returns:
-        list of (int, int): list of pairs (row, column) of all fields in
-                            the same row.
-    """
-    return [(row, j) for j in INDICES if include or j != col]
+    dash_count = sudoku.width + sudoku.width * max_field_length
 
+    rule = "-" * dash_count + "+"
+    for i in range(sudoku.height-2):
+        rule += "-" * (dash_count + 1) + "+"
+    rule += "-" * dash_count + "\n"
 
-def square_of(row, col, include=True):
-    """Return all coordinates in the square of (col, row) as a list.
+    s = ""
 
-    Args:
-        row (int): The row of the field.
-        col (int): The column of the field.
-        include (bool): Whether or not to include (row, col).
+    field_count = sudoku.width * sudoku.height
 
-    Returns:
-        list of (int, int): list of pairs (row, column) of all fields in
-                            the same square.
-    """
-    grid_x = col - (col % 3)
-    grid_y = row - (row % 3)
+    for rc, row in enumerate(sudoku.indices):
+        col_str = []
+        for cc, col in enumerate(sudoku.indices):
+            if sudoku[row, col]:
+                val = str(sudoku[row, col])
+            elif not include_candidates:
+                val = ""
+            else:
+                val = candidate_prefix + number_sep.join(
+                    [str(x) for x in sorted(sudoku.get_candidates(row, col))])
 
-    coords = [(grid_y + i, grid_x + j) for i in range(3) for j in range(3)]
-    if not include:
-        coords.remove((row, col))
-    return coords
+            if align_right:
+                val = val.rjust(max_field_length)
+            else:
+                val = val.ljust(max_field_length)
 
+            col_str.append(val)
+            if (cc + 1) % sudoku.width == 0 and cc < field_count - 1:
+                col_str.append("|")
 
-def surrounding_of(row, col, include=True):
-    """Return all surrounding coordinates of (col, row) as a list.
+        s += " ".join(col_str)
 
-    Args:
-        row (int): The row of the field.
-        col (int): The column of the field.
-        include (bool): Whether or not to include (row, col).
+        if rc < field_count - 1:
+            s += "\n"
 
-    Returns:
-        list of (int, int): list of pairs (row, column) of all fields in
-                            the same column, row or square.
-    """
-    coords = row_of(row, col, include=include)
-    coords.extend(column_of(row, col, include=include))
-    coords.extend(_quad_without_row_and_column_of(row, col))
-
-    # remove two items of (col, row) in coords (there are three)
-    if include:
-        coords.remove((row, col))
-
-    return coords
-
-
-def _quad_without_row_and_column_of(row, col):
-    """Return some coordinates in the square of (col, row) as a list.
-
-    The coordinates in the same row and column are removed.
-
-    This is an internal function and should not be used
-    outside of the sudoku module.
-    """
-    grid_x = col - (col % 3)
-    grid_y = row - (row % 3)
-
-    return [(grid_y + i, grid_x + j) for i, j in product(
-        range(3), repeat=2) if grid_y + i != row and grid_x + j != col]
+        if (rc + 1) % sudoku.height == 0 and rc < field_count - 1:
+            s += rule
+    return s
