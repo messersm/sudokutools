@@ -34,7 +34,7 @@ also comes with a commandline tool (the sudokutools shell) named
 ## Development status
 This software is in Alpha. API changes may occur between minor versions.
 It should however be quite stable: Right now its functionality is covered
-with 40+ unit tests.
+with 50+ unit tests.
 
 ## Installation
 sudokutools is available via the Python Package Index (pypi).
@@ -59,7 +59,7 @@ much everything you want with it. For details see ``LICENSE.txt``.
 + [Solving sudokus](#solving-sudokus)
 + [Creating new sudokus](#creating-new-sudokus)
 + [Creating sudokus from templates](#creating-sudokus-from-templates)
-
++ [Different sudoku sizes](#different-sudoku-sizes)
 
 ### Parsing and printing
 ```python
@@ -107,7 +107,7 @@ For humans:
 ### Printing sudokus with candidates
 ```python
 from sudokutools.solve import init_candidates
-from sudokutools.printing import view
+from sudokutools.sudoku import view
 
 # sudoku is the instance from the code above
 init_candidates(sudoku)
@@ -116,17 +116,17 @@ print(view(sudoku))
 
 Output:
 ```
-1469   4679   12479  | 12567  3      125678 | 459    4578   45789 
-14     347    5      | 17     17     9      | 6      478    2     
-69     679    8      | 2567   57     4      | 59     1      3     
----------------------+----------------------+---------------------
-14589  2      149    | 1579   6      1357   | 345    34578  4578  
-7      589    3      | 259    4      25     | 1      258    6     
-1456   456    14     | 1257   8      12357  | 2345   9      457   
----------------------+----------------------+---------------------
-2      1      479    | 3      579    567    | 8      456    459   
-3      459    6      | 8      159    15     | 7      245    1459  
-4589   45789  479    | 145679 2      1567   | 3459   3456   1459  
+  *1469   *4679  *12479 |  *12567       3 *125678 |    *459   *4578  *45789
+    *14    *347       5 |     *17     *17       9 |       6    *478       2
+    *69    *679       8 |   *2567     *57       4 |     *59       1       3
+------------------------+-------------------------+------------------------
+ *14589       2    *149 |   *1579       6   *1357 |    *345  *34578   *4578
+      7    *589       3 |    *259       4     *25 |       1    *258       6
+  *1456    *456     *14 |   *1257       8  *12357 |   *2345       9    *457
+------------------------+-------------------------+------------------------
+      2       1    *479 |       3    *579    *567 |       8    *456    *459
+      3    *459       6 |       8    *159     *15 |       7    *245   *1459
+  *4589  *45789    *479 | *145679       2   *1567 |   *3459   *3456   *1459
 ```
 
 ### Calculating candidates
@@ -364,6 +364,92 @@ Output:
       | 6 8 7 |      
 ```
 
+### Different sudoku sizes
+``sudokutools`` supports different sizes for sudokus. All methods and
+function, which generate or parse sudokus are able to work with them.
+In the ``sudokutools`` library "size" always refers to the size of a single
+region. That means, standard sudokus have a size of 3x3.
+
+```python
+from sudokutools.sudoku import Sudoku
+
+EXAMPLE_16x16 = """
+0 4 9 6 1 0 12 0 8 0 14 0 0 0 2 3
+0 5 0 7 3 2 8 16 9 0 15 11 12 10 4 13
+0 8 0 15 0 0 10 11 2 5 1 0 16 6 9 7
+10 11 2 3 7 9 6 15 13 16 0 0 0 0 8 0
+7 0 5 14 8 6 0 12 15 2 3 0 1 11 0 9
+8 16 1 4 0 7 15 14 0 13 11 0 3 12 6 2
+15 3 11 13 2 1 5 10 6 9 0 7 4 16 14 0
+9 12 6 2 13 11 0 4 14 1 8 16 0 5 10 15
+0 14 7 9 15 12 0 0 11 0 10 2 8 0 16 6
+0 2 15 8 10 16 1 0 12 4 0 13 9 3 11 0
+11 1 10 12 6 0 13 9 16 8 7 14 2 4 0 5
+0 6 3 16 14 8 11 2 0 15 9 1 13 0 0 10
+2 7 16 0 11 4 14 0 1 10 13 9 15 8 3 12
+0 15 4 1 0 13 7 8 3 0 2 6 10 9 5 0
+3 13 12 10 16 15 9 1 4 14 5 8 6 2 7 11
+6 9 8 0 0 10 2 0 7 12 16 0 14 13 1 4
+"""
+
+sudoku = Sudoku.decode(EXAMPLE_16x16, number_sep=" ")
+print(sudoku.size)
+print(sudoku)
+```
+
+``Sudoku.decode()`` also provides a ``size`` keyword argument, which can
+be used, if the size of a region in the sudoku is arbitrary (e.g. 2x3 or 3x2).
+
+Output:
+```
+(4, 4)
+    4  9  6 |  1    12    |  8    14    |        2  3
+    5     7 |  3  2  8 16 |  9    15 11 | 12 10  4 13
+    8    15 |       10 11 |  2  5  1    | 16  6  9  7
+10 11  2  3 |  7  9  6 15 | 13 16       |        8   
+------------+-------------+-------------+------------
+ 7     5 14 |  8  6    12 | 15  2  3    |  1 11     9
+ 8 16  1  4 |     7 15 14 |    13 11    |  3 12  6  2
+15  3 11 13 |  2  1  5 10 |  6  9     7 |  4 16 14   
+ 9 12  6  2 | 13 11     4 | 14  1  8 16 |     5 10 15
+------------+-------------+-------------+------------
+   14  7  9 | 15 12       | 11    10  2 |  8    16  6
+    2 15  8 | 10 16  1    | 12  4    13 |  9  3 11   
+11  1 10 12 |  6    13  9 | 16  8  7 14 |  2  4     5
+    6  3 16 | 14  8 11  2 |    15  9  1 | 13       10
+------------+-------------+-------------+------------
+ 2  7 16    | 11  4 14    |  1 10 13  9 | 15  8  3 12
+   15  4  1 |    13  7  8 |  3     2  6 | 10  9  5   
+ 3 13 12 10 | 16 15  9  1 |  4 14  5  8 |  6  2  7 11
+ 6  9  8    |    10  2    |  7 12 16    | 14 13  1  4
+```
+
+You can also generate sudokus of different sizes, using the ``size`` keyword
+argument of the ``generate()`` function, which takes a pair
+indicating ``(width, height)`` of a region.
+
+```python
+from sudokutools.generate import generate
+
+sudoku = generate(size=(2, 5))
+print(sudoku)
+```
+
+Output:
+```
+      |  9  8 |  2    |       |     7
+      |  2    |     7 |     6 |      
+ 9  5 |     1 |       |       |      
+   10 |       |  9    |     8 |     5
+    6 |       |    10 |       |     4
+------+-------+-------+-------+------
+ 8    |  1    |       |    10 |  7   
+      |     3 |       |     9 |  4   
+    4 |  5    |  7    |       |  3 10
+ 6    | 10    |       |       |      
+      |     2 | 10    |  3    |  9   
+```
+
 There's much more that you can do, so be sure to check out the documentation.
 
 ## Sudoku in the Shell
@@ -478,11 +564,20 @@ $ sudokutools -c "loop 3; generate; encode; solve; encode; loop end"
 + [Version 0.1.1](#version-011)
 + [Version 0.1](#version-01)
 
-### Version 0.3.0 (planned)
+### Version 0.3.0 (in development)
 #### Features (planned):
 * Play mode for the sudokutools shell.
 * More solving strategies (X-Wing, ...)
 * Support for different sudoku sizes (4x4, 16x16, ...)
+
+#### Changes:
+* Module ``sudokutools.sudoku``:
+  * **API change:** ``len(sudoku)`` no longer returns the number of filled
+  fields, but the total number of fields, which now depends on the given
+  size.
+* Module ``sudokutools.printing``:
+  * **API change:** Module removed. ``view()``
+  has been moved to ``sudokutools.sudoku``. 
 
 ### Version 0.2.0 (current)
 #### Features:
