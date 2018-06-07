@@ -347,12 +347,12 @@ class CoordTests(TestCase):
                 self.assertNotIn((row, col), coords)
 
     def test_region_of(self):
-        """region_of() returns all fields of a square and no other."""
+        """box_of() returns all fields of a square and no other."""
         for width, height in TEST_SIZES:
             sudoku = Sudoku(size=(width, height))
 
             for row, col in sudoku:
-                coords = sudoku.region_of(row, col, include=True)
+                coords = sudoku.box_of(row, col, include=True)
                 self.assertEqual(len(coords), len(sudoku.numbers))
 
                 start_row = row - (row % sudoku.height)
@@ -361,7 +361,7 @@ class CoordTests(TestCase):
                     for j in range(sudoku.width):
                         self.assertIn((start_row + i, start_col + j), coords)
 
-                coords = sudoku.region_of(row, col, include=False)
+                coords = sudoku.box_of(row, col, include=False)
                 self.assertEqual(len(coords), len(sudoku.numbers)-1)
                 self.assertNotIn((row, col), coords)
 
@@ -380,7 +380,7 @@ class CoordTests(TestCase):
                     self.assertIn((i, j), coords)
                 for i, j in sudoku.column_of(row, col, include=True):
                     self.assertIn((i, j), coords)
-                for i, j in sudoku.region_of(row, col, include=True):
+                for i, j in sudoku.box_of(row, col, include=True):
                     self.assertIn((i, j), coords)
 
                 coords = sudoku.surrounding_of(row, col, include=False)
@@ -393,6 +393,20 @@ class CoordTests(TestCase):
             sudoku = Sudoku(size=(width, height))
             self.assertEqual(
                 sorted(sudoku.surrounding_of(row, col)), sorted(coords))
+
+    def test_box_at(self):
+        """box_at() returns the correct box indices."""
+
+        for width, height in TEST_SIZES:
+            sudoku = Sudoku(size=(width, height))
+            l = []
+            for i in range(sudoku.width):
+                for j in range(sudoku.height):
+                    for x in range(sudoku.height):
+                        l.extend([x + i * sudoku.height] * sudoku.width)
+
+            boxes = [sudoku.box_at(r, c) for r, c in sudoku]
+            self.assertEqual(l, boxes)
 
 
 # view() tests

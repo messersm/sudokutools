@@ -428,6 +428,18 @@ class Sudoku(object):
 
         return sudoku
 
+    def box_at(self, row, col):
+        """Return the box index of the field at (row, col)
+
+        Args:
+            row (int): The row of the field.
+            col (int): The column of the field.
+
+        Returns:
+            int: The index of the box, in which the field (row, col) lies.
+        """
+        return col // self.width + row - (row % self.height)
+
     def column_of(self, row, col, include=True):
         """Return all coordinates in the column of (col, row) as a list.
 
@@ -456,7 +468,7 @@ class Sudoku(object):
         """
         return [(row, j) for j in self.indices if include or j != col]
 
-    def region_of(self, row, col, include=True):
+    def box_of(self, row, col, include=True):
         """Return all coordinates in the region of (col, row) as a list.
 
         Args:

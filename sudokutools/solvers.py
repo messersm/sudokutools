@@ -200,7 +200,7 @@ class HiddenSingle(_SingleFieldStep):
         yielded_coords = []
 
         for row, col in sudoku.empty():
-            for f in sudoku.column_of, sudoku.row_of, sudoku.region_of:
+            for f in sudoku.column_of, sudoku.row_of, sudoku.box_of:
                 found_hidden_single = False
                 candidates = set(sudoku.numbers)
                 for i, j in f(row, col, include=False):
@@ -263,7 +263,7 @@ class NakedTuple(SolveStep):
 
         # we work through rows, cols and quads in 3 steps, since the
         # empty fields can changed in-between
-        for func in sudoku.row_of, sudoku.column_of, sudoku.region_of:
+        for func in sudoku.row_of, sudoku.column_of, sudoku.box_of:
             clist = []
             for (row, col) in sudoku.empty():
                 coords = func(row, col)
@@ -328,7 +328,7 @@ class HiddenTuple(SolveStep):
 
         # we work through rows, cols and quads in 3 steps, since the
         # empty fields can changed in-between
-        for func in sudoku.row_of, sudoku.column_of, sudoku.region_of:
+        for func in sudoku.row_of, sudoku.column_of, sudoku.box_of:
             clist = []
             for (i, j) in sudoku.empty():
                 coords = func(i, j)
