@@ -404,13 +404,13 @@ class PointingTuple(SolveStep):
                 # box, remove this candidate from all other fields
                 # in the box
                 if len(set([sudoku.box_at(r, c) for r, c in clues])) == 1:
-                    affected = [(r, c) for r, c in sudoku.box_of(*clues[0])
-                                if (r, c) not in clues
-                                and candidate in sudoku.get_candidates(r, c)]
+                    affected = [(r, c) for r, c in sudoku.box_of(*clues[0])]
 
-                    if affected:
-                        yield cls(
-                            clues=clues, affected=affected, values=(candidate,))
+                    step = cls(clues=clues, affected=affected,
+                               values=(candidate,))
+                    step.build_actions(sudoku)
+                    if step.actions:
+                        yield step
 
     @classmethod
     def __find_in_box(cls, sudoku, box):
@@ -431,28 +431,27 @@ class PointingTuple(SolveStep):
             # if all fields with this candidate lie in the same row
             # remove this candidate from all other fields in the same row
             if len(set([r for r, c in clues])) == 1:
-                affected = [(r, c) for r, c in sudoku.row_of(*clues[0])
-                            if (r, c) not in clues
-                            and candidate in sudoku.get_candidates(r, c)]
-                if affected:
-                    yield cls(
-                        clues=clues, affected=affected, values=(candidate,))
+                affected = [(r, c) for r, c in sudoku.row_of(*clues[0])]
 
             # if all fields with this candidate lie in the same column
             # remove this candidate from all other fields in the same column
             elif len(set([c for r, c in clues])) == 1:
-                affected = [(r, c) for r, c in sudoku.column_of(*clues[0])
-                            if (r, c) not in clues
-                            and candidate in sudoku.get_candidates(r, c)]
+                affected = [(r, c) for r, c in sudoku.column_of(*clues[0])]
+            else:
+                affected = []
 
-                if affected:
-                    yield cls(
-                        clues=clues, affected=affected, values=(candidate,))
+            step = cls(clues=clues, affected=affected, values=(candidate,))
+            step.build_actions(sudoku)
+            if step.actions:
+                yield step
 
     def build_actions(self, sudoku):
+        val = self.values[0]
+
         for r, c in self.affected:
-            self.actions.append(
-                Action(Sudoku.remove_candidates, r, c, self.values))
+            if (r, c) not in self.clues and val in sudoku.get_candidates(r, c):
+                self.actions.append(
+                    Action(Sudoku.remove_candidates, r, c, self.values))
 
 PointingPair = type("PointingPair", (PointingTuple,), dict(n=2))
 PointingTriple = type("PointingTriple", (PointingTuple,), dict(n=3))
