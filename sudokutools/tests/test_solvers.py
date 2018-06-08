@@ -5,6 +5,7 @@ from sudokutools.solve import init_candidates
 from sudokutools.solvers import (
     NakedSingle, NakedPair, NakedTriple, NakedQuad, NakedQuint,
     HiddenSingle, HiddenPair, HiddenTriple, HiddenQuad, HiddenQuint,
+    PointingPair, PointingTriple,
     Bruteforce, SOLVE_STEPS
 )
 from sudokutools.sudoku import Sudoku
@@ -57,6 +58,14 @@ FIRST_STEPS = [
         ((0, 1), (1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (7, 1), (8, 1)),
         ((0, 1), (1, 1), (2, 1), (3, 1), (6, 1)),
         (4, 5, 6, 8, 9)),
+    PointingPair(
+        ((0, 7), (1, 7)),
+        ((0, 6), (2, 6)),
+        (2,)),
+    PointingTriple(
+        ((6, 3), (6, 4), (6, 5)),
+        ((7, 3), (7, 4), (7, 5), (8, 3), (8, 4)),
+        (3,)),
     Bruteforce(0, 0, 1),
 ]
 

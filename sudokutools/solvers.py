@@ -27,7 +27,7 @@ Solve steps defined here:
 
 from collections import defaultdict, namedtuple
 from functools import total_ordering
-from itertools import combinations, product
+from itertools import combinations
 
 from sudokutools.solve import calc_candidates, bruteforce
 from sudokutools.sudoku import Sudoku
@@ -365,11 +365,97 @@ class HiddenTuple(SolveStep):
                     if step.actions:
                         yield step
 
-
 HiddenPair = type("HiddenPair", (HiddenTuple,), dict(n=2))
 HiddenTriple = type("HiddenTriple", (HiddenTuple,), dict(n=3))
 HiddenQuad = type("HiddenQuad", (HiddenTuple,), dict(n=4))
 HiddenQuint = type("HiddenQuint", (HiddenTuple,), dict(n=5))
+
+
+class PointingTuple(SolveStep):
+    n = 2
+
+    @classmethod
+    def find(cls, sudoku):
+        # reducing row or column candidates
+        for box in sudoku.indices:
+            for step in cls.__find_in_box(sudoku, box):
+                yield step
+
+        # reducing box candidates
+        for x in sudoku.indices:
+            for step in cls.__find_in_row_and_column(sudoku, x):
+                yield step
+
+    @classmethod
+    def __find_in_row_and_column(cls, sudoku, x):
+        for f in sudoku.row_of, sudoku.column_of:
+            coords = f(x, x)
+
+            for candidate in sudoku.numbers:
+                clues = [(r, c) for r, c in coords
+                         if candidate in sudoku.get_candidates(r, c)]
+
+                # skip, if this doesn't have the correct number of fields
+                # (e.g. we have a pair, but want a triple)
+                if len(clues) != cls.n:
+                    continue
+
+                # if all fields with this candidate lie in the same
+                # box, remove this candidate from all other fields
+                # in the box
+                if len(set([sudoku.box_at(r, c) for r, c in clues])) == 1:
+                    affected = [(r, c) for r, c in sudoku.box_of(*clues[0])
+                                if (r, c) not in clues
+                                and candidate in sudoku.get_candidates(r, c)]
+
+                    if affected:
+                        yield cls(
+                            clues=clues, affected=affected, values=(candidate,))
+
+    @classmethod
+    def __find_in_box(cls, sudoku, box):
+        row = (box // sudoku.height) * sudoku.height
+        col = (box % sudoku.height) * sudoku.width
+
+        box_coords = sudoku.box_of(row, col)
+
+        for candidate in sudoku.numbers:
+            clues = [(r, c) for r, c in box_coords
+                     if candidate in sudoku.get_candidates(r, c)]
+
+            # skip, if this doesn't have the correct number of fields
+            # (e.g. we have a pair, but want a triple)
+            if len(clues) != cls.n:
+                continue
+
+            # if all fields with this candidate lie in the same row
+            # remove this candidate from all other fields in the same row
+            if len(set([r for r, c in clues])) == 1:
+                affected = [(r, c) for r, c in sudoku.row_of(*clues[0])
+                            if (r, c) not in clues
+                            and candidate in sudoku.get_candidates(r, c)]
+                if affected:
+                    yield cls(
+                        clues=clues, affected=affected, values=(candidate,))
+
+            # if all fields with this candidate lie in the same column
+            # remove this candidate from all other fields in the same column
+            elif len(set([c for r, c in clues])) == 1:
+                affected = [(r, c) for r, c in sudoku.column_of(*clues[0])
+                            if (r, c) not in clues
+                            and candidate in sudoku.get_candidates(r, c)]
+
+                if affected:
+                    yield cls(
+                        clues=clues, affected=affected, values=(candidate,))
+
+    def build_actions(self, sudoku):
+        for r, c in self.affected:
+            self.actions.append(
+                Action(Sudoku.remove_candidates, r, c, self.values))
+
+PointingPair = type("PointingPair", (PointingTuple,), dict(n=2))
+PointingTriple = type("PointingTriple", (PointingTuple,), dict(n=3))
 
 
 # A list of available solve methods.
@@ -378,8 +464,10 @@ SOLVE_STEPS = [
     NakedSingle,
     HiddenSingle,
     NakedPair,
+    PointingPair,
     HiddenPair,
     NakedTriple,
+    PointingTriple,
     HiddenTriple,
     NakedQuad,
     HiddenQuad,
