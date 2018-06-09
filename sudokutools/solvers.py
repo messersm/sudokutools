@@ -27,7 +27,7 @@ Solve steps defined here:
 
 from collections import defaultdict, namedtuple
 from functools import total_ordering
-from itertools import combinations
+from itertools import combinations, product
 
 from sudokutools.solve import calc_candidates, bruteforce
 from sudokutools.sudoku import Sudoku
@@ -456,6 +456,72 @@ class PointingTuple(SolveStep):
 PointingPair = type("PointingPair", (PointingTuple,), dict(n=2))
 PointingTriple = type("PointingTriple", (PointingTuple,), dict(n=3))
 
+
+class BasicFish(SolveStep):
+    n = 2
+
+    @classmethod
+    def find(cls, sudoku):
+        variants = ((0, sudoku.row_of, sudoku.column_of),
+                    (1, sudoku.column_of, sudoku.row_of))
+
+        for item, candidate in product(variants, sudoku.numbers):
+            for step in cls.__find_for_candidate(sudoku, candidate, *item):
+                yield step
+
+    @classmethod
+    def __find_for_candidate(
+            cls, sudoku, candidate, offset, base_func, cover_func):
+
+        # fields with this candidate, keyed by their index.
+        fields = {}
+        for i in sudoku.indices:
+            fields[i] = [(r, c) for r, c in base_func(i, i)
+                         if candidate in sudoku.get_candidates(r, c)]
+
+        valid_indices = [i for i in fields if 2 <= len(fields[i]) <= cls.n]
+
+        for indices in combinations(valid_indices, cls.n):
+            base_fields = []
+            for i in indices:
+                base_fields.extend(fields[i])
+
+            other_counts = defaultdict(lambda: 0)
+            other_offset = (offset + 1) % 2
+            for coord in base_fields:
+                other_counts[coord[other_offset]] += 1
+
+            # The other coordinate only appears once,
+            # so this is not a valid fish
+            if min(other_counts.values()) < 2:
+                continue
+            # There are more than cls.n other coordinates,
+            # so this is not a valid fish
+            if len(other_counts) > cls.n:
+                continue
+
+            affected = []
+            for val in other_counts:
+                affected.extend(cover_func(val, val))
+            step = cls(
+                 clues=base_fields,
+                 affected=affected,
+                 values=(candidate,))
+            step.build_actions(sudoku)
+            if step.actions:
+                yield step
+
+    def build_actions(self, sudoku):
+        val = self.values[0]
+        for r, c in self.affected:
+            if (r, c) not in self.clues and val in sudoku.get_candidates(r, c):
+                self.actions.append(
+                    Action(Sudoku.remove_candidates, r, c, self.values)
+                )
+
+XWing = type("XWing", (BasicFish,), dict(n=2))
+Swordfish = type("Swordfish", (BasicFish,), dict(n=3))
+Jellyfish = type("Jellyfish", (BasicFish,), dict(n=4))
 
 # A list of available solve methods.
 SOLVE_STEPS = [
