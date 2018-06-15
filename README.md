@@ -559,27 +559,53 @@ $ sudokutools -c "loop 3; generate; encode; solve; encode; loop end"
 ```
 
 ## Road map and changelog
-+ [Version 0.3.0 (planned)](#version-030--planned-)
-+ [Version 0.2.0 (current)](#version-020--current-)
++ [Version 0.4.0 (planned)](#version-040)
++ [Version 0.3.0 (current)](#version-030)
++ [Version 0.2.0](#version-020)
 + [Version 0.1.1](#version-011)
 + [Version 0.1](#version-01)
 
-### Version 0.3.0 (in development)
+### Version 0.4.0
 #### Features (planned):
+* More solving methods.
+* Rating and scoring of sudokus.
 * Play mode for the sudokutools shell.
-* More solving strategies (X-Wing, ...)
-* Support for different sudoku sizes (4x4, 16x16, ...)
+
+
+### Version 0.3.0
+> This is the current ``sudokutools`` version.
+
+#### Features:
+* Added Pointing Pair / Triples and Basic Fishes (X-Wing, Swordfish, Jellyfish)
+  to the ``sudokutools.solvers`` module
+* Support for arbitrary sudoku sizes
 
 #### Changes:
+* Global change: All classes and functions now work with arbitrary sudoku
+  sizes.
 * Module ``sudokutools.sudoku``:
   * **API change:** ``len(sudoku)`` no longer returns the number of filled
   fields, but the total number of fields, which now depends on the given
   size.
+  * **API change:** Coordinate functions ``row_of()``, ``column_of``,
+    ``square_of()`` and ``surrounding_of()`` are now methods
+    ``Sudoku.row_of()``, ``Sudoku.column_of()``, ``Sudoku.region_of()``
+    and ``Sudoku.surrounding_of`` of a ``Sudoku`` instance,
+    since they depend on the sudoku size. 
+  * Added method: ``Sudoku.__iter__()``, which iterates through
+    all (row, column) pairs of a sudoku.
+  * Added ``Sudoku.width``, ``Sudoku.height`` and ``Sudoku.height``
+    property.
+  * Improved method: ``Sudoku.decode()`` is now more versatile.  
 * Module ``sudokutools.printing``:
   * **API change:** Module removed. ``view()``
   has been moved to ``sudokutools.sudoku``. 
+* Module ``sudokutools.solvers``:
+  * Added classes ``PointingPair``, ``PointingTriple``, ``XWing``,
+    ``Swordfish``, ``Jellyfish``
 
-### Version 0.2.0 (current)
+
+### Version 0.2.0
 #### Features:
 * More printing: print the candidates of sudokus
 * Different solving strategies, which can be used to learn solving sudokus in

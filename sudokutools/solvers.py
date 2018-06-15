@@ -22,6 +22,11 @@ Solve steps defined here:
  * HiddenTriple
  * HiddenQuad
  * HiddenQuint
+ * PointingPair
+ * PointingTriple
+ * XWing
+ * Swordfish
+ * Jellyfish
  * Bruteforce
 """
 
