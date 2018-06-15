@@ -34,7 +34,7 @@ from collections import defaultdict, namedtuple
 from functools import total_ordering
 from itertools import combinations, product
 
-from sudokutools.solve import calc_candidates, bruteforce
+from sudokutools.solve import init_candidates, calc_candidates, bruteforce
 from sudokutools.sudoku import Sudoku
 
 
@@ -564,6 +564,7 @@ def solve(sudoku, report=lambda step: None):
     """
 
     solution = sudoku.copy()
+    init_candidates(solution, filled_only=True)
 
     while True:
         for cls in SOLVERS:

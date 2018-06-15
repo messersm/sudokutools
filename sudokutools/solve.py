@@ -35,7 +35,7 @@ def calc_candidates(sudoku, row, col):
     return candidates
 
 
-def init_candidates(sudoku):
+def init_candidates(sudoku, filled_only=False):
     """Calculate and set all candidates in the sudoku.
 
     Sets all candidates in the sudoku based on the numbers
@@ -44,9 +44,14 @@ def init_candidates(sudoku):
     Args:
         sudoku (Sudoku): The :class:`Sudoku` instance for which the
                          candidates are calculated.
+        filled_only (bool): Only set candidate of already set fields.
+                            E.g. a field with a value of 2, will get the
+                            candidates {2}, but a field without a value
+                            will get no candidates.
     """
     for row, col in sudoku:
-        sudoku.set_candidates(row, col, calc_candidates(sudoku, row, col))
+        if not filled_only or sudoku[row, col]:
+            sudoku.set_candidates(row, col, calc_candidates(sudoku, row, col))
 
 
 def bruteforce(sudoku):

@@ -257,7 +257,6 @@ class SudokuTests(TestCase):
             d[row, col] = sudoku[row, col]
 
         self.assertEqual(sudoku, d)
-        d[0, 0] -= 1
 
     def test_unequal_type(self):
         """If an object doesn't return the same numbers, it's unequal."""
