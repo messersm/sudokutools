@@ -187,6 +187,19 @@ class CandidatesTest(TestCase):
             c2 = sudoku2.get_candidates(row, col)
             self.assertEqual(c1, c2)
 
+    def test_init_candidates_filled_only(self):
+        """The filled_only keyword argument of init_candidates() works."""
+
+        sudoku = Sudoku.decode(CANDIDATES_EXAMPLE).copy()
+        init_candidates(sudoku, filled_only=True)
+        for row, col in sudoku:
+            val = sudoku[row, col]
+            if val:
+                self.assertEqual(
+                    sudoku.get_candidates(row, col), frozenset([val]))
+            else:
+                self.assertEqual(sudoku.get_candidates(row, col), frozenset())
+
     def test_number_candidates(self):
         """A number unequal to 0 in a field is the field's single candidate."""
         sudoku1 = Sudoku.decode(CANDIDATES_EXAMPLE)
