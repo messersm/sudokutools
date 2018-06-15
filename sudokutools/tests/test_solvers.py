@@ -6,7 +6,7 @@ from sudokutools.solvers import (
     NakedSingle, NakedPair, NakedTriple, NakedQuad, NakedQuint,
     HiddenSingle, HiddenPair, HiddenTriple, HiddenQuad, HiddenQuint,
     PointingPair, PointingTriple,
-    Bruteforce, SOLVE_STEPS
+    Bruteforce, SOLVERS
 )
 from sudokutools.sudoku import Sudoku
 
@@ -87,7 +87,7 @@ class StepTests(TestCase):
             count = (width ** 2 * height ** 2) // 2
             sudoku = generate(min_count=count, size=(width, height))
 
-            for cls in SOLVE_STEPS:
+            for cls in SOLVERS:
                 try:
                     steps = list(cls.find(sudoku))
                 except Exception as e:
