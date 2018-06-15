@@ -523,48 +523,45 @@ XWing = type("XWing", (BasicFish,), dict(n=2))
 Swordfish = type("Swordfish", (BasicFish,), dict(n=3))
 Jellyfish = type("Jellyfish", (BasicFish,), dict(n=4))
 
-# A list of available solve methods.
-SOLVE_STEPS = [
+
+# A list of available solve methods (in the order, they're used by solve())
+SOLVERS = [
     CalculateCandidates,
     NakedSingle,
     HiddenSingle,
     NakedPair,
-    PointingPair,
     HiddenPair,
     NakedTriple,
-    PointingTriple,
     HiddenTriple,
     NakedQuad,
     HiddenQuad,
     NakedQuint,
     HiddenQuint,
-    Bruteforce
+    PointingPair,
+    PointingTriple,
+    XWing,
+    Swordfish,
+    Jellyfish,
+    Bruteforce,
 ]
 
 
-def solve(sudoku, steps=SOLVE_STEPS, report=lambda step: None):
+def solve(sudoku, report=lambda step: None):
     """Solve the sudoku and return the solution.
 
     Args:
         sudoku (Sudoku): The sudoku to solve.
-        steps (iterable): The classes of steps that can be used.
         report (callable): A function taking a single argument (the current
                            step), which can be used as a callback.
 
     Returns:
         Sudoku: The solution of the sudoku.
-
-    Be aware, that not all sudokus may be solved, if the steps
-    argument restricts the allowed solve methods. E.g. CalculateCandidates
-    should almost always be the first solving method in the steps list,
-    since most other methods use the calculated candidates.
     """
 
     solution = sudoku.copy()
-    steps = list(steps)
 
     while True:
-        for cls in steps:
+        for cls in SOLVERS:
             count = 0
 
             for step in cls.find(solution):
