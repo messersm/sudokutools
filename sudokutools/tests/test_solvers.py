@@ -6,7 +6,9 @@ from sudokutools.solvers import (
     NakedSingle, NakedPair, NakedTriple, NakedQuad, NakedQuint,
     HiddenSingle, HiddenPair, HiddenTriple, HiddenQuad, HiddenQuint,
     PointingPair, PointingTriple,
-    Bruteforce, SOLVERS
+    XWing, Swordfish, Jellyfish,
+    Bruteforce,
+    SOLVERS
 )
 from sudokutools.sudoku import Sudoku
 
@@ -71,15 +73,40 @@ FIRST_STEPS = [
 
 TEST_SIZES = ((2, 2), (2, 3), (2, 4), (3, 3), (4, 4))
 
+XWING_EXAMPLE = """
+500010070
+840000000
+603500000
+000030005
+000107000
+030040210
+070950400
+000004502
+000000900
+"""
+
+XWINGS = [
+    XWing(((4, 1), (4, 2), (8, 1), (8, 2)), ((5, 2),), (5,)),
+]
+
 
 class StepTests(TestCase):
-    def test_first(self):
+    def test_simple(self):
+        """Naked Singles/Tuples, Hidden Singles/Tuples and pointing pairs work.
+        """
         sudoku = Sudoku.decode(EXAMPLE)
         init_candidates(sudoku)
         for first in FIRST_STEPS:
             cls = first.__class__
             steps = sorted(cls.find(sudoku))[:1]
             self.assertEqual(steps, [first], cls.__name__)
+
+    def test_xwing(self):
+        """XWing works."""
+        sudoku = Sudoku.decode(XWING_EXAMPLE)
+        init_candidates(sudoku)
+        xwings = list(XWing.find(sudoku))
+        self.assertEqual(xwings, XWINGS)
 
     def test_sizes(self):
         """Finding solve steps doesn't raise an exception on different sizes."""

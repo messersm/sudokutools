@@ -505,24 +505,26 @@ class BasicFish(SolveStep):
             if len(other_counts) > cls.n:
                 continue
 
-            affected = []
+            covered = []
             for val in other_counts:
-                affected.extend(cover_func(val, val))
-            step = cls(
-                 clues=base_fields,
-                 affected=affected,
-                 values=(candidate,))
-            step.build_actions(sudoku)
-            if step.actions:
-                yield step
+                covered.extend(cover_func(val, val))
+
+            affected = [(r, c) for r, c in covered
+                        if (r, c) not in base_fields
+                        and candidate in sudoku.get_candidates(r, c)]
+
+            if affected:
+                yield cls(
+                    clues=base_fields,
+                    affected=affected,
+                    values=(candidate,)
+                )
 
     def build_actions(self, sudoku):
-        val = self.values[0]
         for r, c in self.affected:
-            if (r, c) not in self.clues and val in sudoku.get_candidates(r, c):
-                self.actions.append(
-                    Action(Sudoku.remove_candidates, r, c, self.values)
-                )
+            self.actions.append(
+                Action(Sudoku.remove_candidates, r, c, self.values))
+
 
 XWing = type("XWing", (BasicFish,), dict(n=2))
 Swordfish = type("Swordfish", (BasicFish,), dict(n=3))
