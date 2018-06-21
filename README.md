@@ -34,7 +34,7 @@ also comes with a commandline tool (the sudokutools shell) named
 ## Development status
 This software is in Alpha. API changes may occur between minor versions.
 It should however be quite stable: Right now its functionality is covered
-with 50+ unit tests.
+with 60+ unit tests.
 
 ## Installation
 sudokutools is available via the Python Package Index (pypi).
@@ -601,6 +601,8 @@ $ sudokutools -c "loop 3; generate; encode; solve; encode; loop end"
   * **API change:** Module removed. ``view()``
   has been moved to ``sudokutools.sudoku``. 
 * Module ``sudokutools.solvers``:
+  * **API change:** ``SolveStep.affected`` now only holds field coordindates
+    which will actually be changed by applying a step.
   * Added classes ``PointingPair``, ``PointingTriple``, ``XWing``,
     ``Swordfish``, ``Jellyfish``
 
