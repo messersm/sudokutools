@@ -1,4 +1,5 @@
-# sudokutools
+# sudokutools [![Build Status](https://travis-ci.org/messersm/sudokutools.svg?branch=master)](https://travis-ci.org/messersm/sudokutools) [![Coverage Status](https://coveralls.io/repos/github/messersm/sudokutools/badge.svg)](https://coveralls.io/github/messersm/sudokutools)
+
 > Yet another python sudoku library.
 
 ```

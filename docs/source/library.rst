@@ -11,14 +11,6 @@ The sudokutools library
     :undoc-members:
     :show-inheritance:
 
-``sudokutools.printing`` - Better printing functionality
---------------------------------------------------------
-
-.. automodule:: sudokutools.printing
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 ``sudokutools.solve`` - Solving and checking
 ---------------------------------------------
 
