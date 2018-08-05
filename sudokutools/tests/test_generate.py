@@ -1,11 +1,11 @@
 from unittest import TestCase
 
+from sudokutools.analyze import is_unique, find_conflicts
 from sudokutools.generate import (
     generate, generate_from_template, create_solution
 )
-from sudokutools.solve import find_conflicts, is_unique
 from sudokutools.sudoku import Sudoku
-
+from sudokutools.tests.constants import TEST_SIZES
 
 TEMPLATE = """
 111111111
@@ -49,8 +49,6 @@ IMPOSSIBLE_TEMPLATE = """
 000000000
 000000000
 """
-
-TEST_SIZES = ((2, 2), (2, 3), (2, 4), (3, 3), (4, 4))
 
 
 class CreateSolutionTests(TestCase):

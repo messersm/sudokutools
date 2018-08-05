@@ -11,8 +11,8 @@ The sudokutools library
     :undoc-members:
     :show-inheritance:
 
-``sudokutools.solve`` - Solving and checking
----------------------------------------------
+``sudokutools.solve`` - Low level solving
+-----------------------------------------
 
 .. automodule:: sudokutools.solve
     :members:
@@ -23,6 +23,14 @@ The sudokutools library
 --------------------------------------------
 
 .. automodule:: sudokutools.solvers
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+``sudokutools.analyze`` - Rate and check sudokus
+------------------------------------------------
+
+.. automodule:: sudokutools.analyze
     :members:
     :undoc-members:
     :show-inheritance:

@@ -1,116 +1,9 @@
-from itertools import product
 from unittest import TestCase
 
-from sudokutools.solve import (
-    bruteforce, find_conflicts, is_unique, calc_candidates, init_candidates
-)
+from sudokutools.solve import bruteforce, calc_candidates, init_candidates
 from sudokutools.sudoku import Sudoku
 
-SOLVE_EXAMPLES = [
-    ("""
-    003020600
-    900305001
-    001806400
-    008102900
-    700000008
-    006708200
-    002609500
-    800203009
-    005010300
-    """, """
-    483921657
-    967345821
-    251876493
-    548132976
-    729564138
-    136798245
-    372689514
-    814253769
-    695417382
-    """),
-
-    ("""
-    009003008
-    010040020
-    200700400
-    800600700
-    090070010
-    003004002
-    005001007
-    030090050
-    700400200
-    """, """
-    469523178
-    317948526
-    258716439
-    821659743
-    694372815
-    573184962
-    945261387
-    132897654
-    786435291
-    """),
-    ("""
-    000000000
-    000008435
-    000030860
-    000000218
-    060000000
-    900154000
-    001000040
-    008700021
-    020900500
-    """, """
-    835476192
-    716298435
-    249531867
-    574369218
-    163827954
-    982154673
-    351682749
-    698745321
-    427913586
-    """),
-    ("""
-    123456
-    630001
-    500002
-    462513
-    314625
-    251364
-    """, """
-    123456
-    635241
-    546132
-    462513
-    314625
-    251364
-    """)
-]
-
-CONFLICT_EXAMPLE = """
-003020600
-900305001
-001806400
-008102900
-700000008
-006708200
-002609500
-800203009
-005010300
-"""
-
-NON_UNIQUE = """
-000000000
-000000000
-000070000
-000000000
-000000000
-000000000
-000000000
-000000000
-000000000
-"""
+from sudokutools.tests.constants import SOLVE_EXAMPLES, NON_UNIQUE
 
 CANDIDATES_EXAMPLE = """
 003020600
@@ -132,8 +25,6 @@ CANDIDATES_EXAMPLE = """
 8,1467,47,2,457,3,17,1467,9,
 46,4679,5,4,1,47,3,24678,2467
 """
-
-TEST_SIZES = ((2, 2), (2, 3), (2, 4), (3, 3), (4, 4))
 
 
 class BruteforceTests(TestCase):
@@ -210,48 +101,3 @@ class CandidatesTest(TestCase):
             value = sudoku1[row, col]
             if value:
                 self.assertEqual(sudoku2.get_candidates(row, col), {value})
-
-
-class AnalyzeTests(TestCase):
-    def setUp(self):
-        """The example provided by this unittest is solvable."""
-        self.assertNotEqual(bruteforce(Sudoku.decode(CONFLICT_EXAMPLE)), None)
-
-    def test_find_conflicts_at(self):
-        """Conflicts at certain coordinates in a given example are found."""
-        sudoku = Sudoku.decode(CONFLICT_EXAMPLE)
-        self.assertEqual(list(find_conflicts(sudoku, (1, 2))), [])
-
-        sudoku[1, 2] = 1
-
-        conflicts = find_conflicts(sudoku, (1, 2))
-        self.assertEqual(next(conflicts), ((1, 2), (1, 8), 1))
-        self.assertEqual(next(conflicts), ((1, 2), (2, 2), 1))
-        self.assertRaises(StopIteration, next, conflicts)
-
-    def test_find_conflicts_sizes(self):
-        """find_conflicts works with different sudoku sizes."""
-
-        for size in TEST_SIZES:
-            sudoku = Sudoku(size=size)
-            self.assertEqual(list(find_conflicts(sudoku)), [])
-
-        for example, solution in SOLVE_EXAMPLES:
-            sudoku = Sudoku.decode(example)
-            self.assertEqual(list(find_conflicts(sudoku)), [])
-
-    def test_find_conflicts(self):
-        """If a sudoku has no conflicts, none are found."""
-        sudoku = Sudoku.decode(CONFLICT_EXAMPLE)
-        self.assertEqual(list(find_conflicts(sudoku)), [])
-
-    def test_unique(self):
-        """If a sudoku is unique, it is evaluated as unique."""
-        for example, solution in SOLVE_EXAMPLES:
-            sudoku = Sudoku.decode(example)
-            self.assertEqual(is_unique(sudoku), True)
-
-    def test_non_unique(self):
-        """If a sudoku is not unique, it is evaluated as non-unique."""
-        sudoku = Sudoku.decode(NON_UNIQUE)
-        self.assertEqual(is_unique(sudoku), False)

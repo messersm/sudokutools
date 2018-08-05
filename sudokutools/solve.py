@@ -1,16 +1,10 @@
-"""Low-level solving and checking of sudokus.
+"""Low-level solving of sudokus.
 
 Functions defined here:
  * bruteforce(): Solves a sudoku using brute force.
  * calc_candidates(): Calculates candidates of a field in a sudoku.
  * init_candidates(): Sets the candidates for all fields in a sudoku.
- * find_conflicts(): Check sudoku for conflicting fields.
- * is_unique(): Check if a sudoku has exactly one solution.
 """
-
-from itertools import product
-
-# from sudokutools.sudoku import INDICES, NUMBERS, surrounding_of
 
 
 def calc_candidates(sudoku, row, col):
@@ -102,57 +96,3 @@ def _do_bruteforce(sudoku):
         for (i, j), value in saved_candidates.items():
             sudoku.set_candidates(i, j, value)
         sudoku[row, col] = 0
-
-
-def find_conflicts(sudoku, *coords):
-    """Yield conflicts in sudoku at coords.
-
-    If coords is empty all possible coordinates will be searched.
-
-    Args:
-        sudoku (Sudoku): The :class:`Sudoku` instance to check.
-        coords (iterable of (int, int)): The coordinates to search within.
-
-    Yields:
-        ((int, int), (int, int), int): tuple of coordinate pairs and the
-                                       offending value.
-        E.g.: ((2, 3), (2, 6), 2) indicates, that there is a conflict for
-        the fields (2, 3) and (2, 6) because both of them contain a 2.
-    """
-    if not coords:
-        coords = list(sudoku)
-
-    for row, col in coords:
-        value = sudoku[row, col]
-        if not value:
-            continue
-        else:
-            for (i, j) in sudoku.surrounding_of(row, col, include=False):
-                if sudoku[i, j] == value:
-                    yield ((row, col), (i, j), value)
-
-
-def is_unique(sudoku):
-    """Check if sudoku has exactly one solution.
-
-    Args:
-        sudoku (Sudoku): The :class:`Sudoku` instance to check.
-
-    Returns:
-        bool: Whether or not the sudoku is unique.
-    """
-    solutions = bruteforce(sudoku)
-
-    # If we have no solutions return False.
-    try:
-        next(solutions)
-    except StopIteration:
-        return False
-
-    # If we have two (or more solutions return False
-    # otherwise return True.
-    try:
-        next(solutions)
-        return False
-    except StopIteration:
-        return True

@@ -8,7 +8,8 @@ Functions defined here:
 
 from random import sample, shuffle
 
-from sudokutools.solve import bruteforce, is_unique
+from sudokutools.analyze import is_unique
+from sudokutools.solve import bruteforce
 from sudokutools.sudoku import Sudoku
 
 SYMMETRY = {
