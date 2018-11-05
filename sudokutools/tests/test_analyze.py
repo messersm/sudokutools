@@ -1,6 +1,7 @@
 from unittest import TestCase
 
-from sudokutools.analyze import rate, RATINGS, find_conflicts, is_unique
+from sudokutools.analyze import (
+    rate, RATINGS, find_conflicts, is_solved, is_unique, score)
 from sudokutools.generate import create_solution, generate
 from sudokutools.solve import bruteforce
 from sudokutools.solvers import SOLVERS
@@ -57,6 +58,15 @@ class ConflictTests(TestCase):
         self.assertEqual(list(find_conflicts(sudoku)), [])
 
 
+class IsSolvedTests(TestCase):
+    def test_is_solved(self):
+        """If a sudoku is solved, it is evaluated as solved."""
+        solution = create_solution()
+        sudoku = generate()
+        self.assertEqual(is_solved(solution), True)
+        self.assertEqual(is_solved(sudoku), False)
+
+
 class IsUniqueTests(TestCase):
     def test_unique(self):
         """If a sudoku is unique, it is evaluated as unique."""
@@ -88,3 +98,18 @@ class RatingTests(TestCase):
         rating = rate(sudoku)
         self.assertGreater(rating, 0)
         self.assertLessEqual(rating, 10)
+
+
+class ScoreTests(TestCase):
+    def test_solved_scores_zero(self):
+        """A solved sudoku has a score of 0."""
+        solution = create_solution()
+        self.assertEqual(score(solution), 0)
+
+    def test_score_works_on_random_sudoku(self):
+        """A random sudoku is scored correctly."""
+        sudoku = generate()
+        self.assertGreater(score(sudoku), 0)
+        max_score = len(list(sudoku.empty())) * max(RATINGS.values())
+        self.assertLessEqual(score(sudoku), max_score)
+

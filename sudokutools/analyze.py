@@ -2,8 +2,11 @@
 
 Functions defined here:
  * find_conflicts(): Check sudoku for conflicting fields.
+ * is_solved(): Check, if a sudoku is solved.
  * is_unique(): Check if a sudoku has exactly one solution.
- * rate(): Return a integer representation of the difficulty of a sudoku.
+ * rate(): Return an integer representation of the difficulty of a sudoku.
+ * score(): Return an integer representation of the work required to solve
+            a sudoku.
 """
 
 from sudokutools.solve import bruteforce
@@ -56,6 +59,39 @@ def rate(sudoku):
         return max([RATINGS[step.__class__] for step in steps])
     except ValueError:
         return 0
+
+
+def score(sudoku):
+    """Return a score for the given sudoku.
+
+    The score depends on the number of empty field as well as
+    which solve methods must be used to solve the sudoku.
+
+    Args:
+        sudoku (Sudoku): The sudoku to score.
+
+    Returns:
+        (int): The score (a value between 0 and empty * 10,
+               where empty is the number of empty fields in the sudoku).
+    """
+    steps = []
+    solve(sudoku, steps.append)
+    try:
+        return sum([RATINGS[step.__class__] for step in steps])
+    except ValueError:
+        return 0
+
+
+def is_solved(sudoku):
+    """Check, if the sudoku is solved.
+
+    Args:
+        sudoku (Sudoku): The :class:`Sudoku` instance to check.
+
+    Returns:
+        bool: Whether or not the sudoku is solved.
+    """
+    return not list(sudoku.empty()) and not list(find_conflicts(sudoku))
 
 
 def is_unique(sudoku):

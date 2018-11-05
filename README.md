@@ -571,7 +571,11 @@ $ sudokutools -c "loop 3; generate; encode; solve; encode; loop end"
 * More solving methods.
 * Rating and scoring of sudokus.
 * Play mode for the sudokutools shell.
-
+* Added module ``sudokutools.analyze`` which provides the new ``rate()``,
+  ``score()`` and ``is_solved()`` functions.
+* Module ``sudokutools.solve``:
+  * **API change:** ``find_conflicts()`` and ``is_unique()`` moved to
+  ``sudokutools.analyze``.
 
 ### Version 0.3.0
 > This is the current ``sudokutools`` version.
@@ -602,7 +606,7 @@ $ sudokutools -c "loop 3; generate; encode; solve; encode; loop end"
   * **API change:** Module removed. ``view()``
   has been moved to ``sudokutools.sudoku``. 
 * Module ``sudokutools.solvers``:
-  * **API change:** ``SolveStep.affected`` now only holds field coordindates
+  * **API change:** ``SolveStep.affected`` now only holds field coordinates
     which will actually be changed by applying a step.
   * Added classes ``PointingPair``, ``PointingTriple``, ``XWing``,
     ``Swordfish``, ``Jellyfish``
