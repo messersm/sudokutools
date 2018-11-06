@@ -76,6 +76,19 @@ class GenerateTests(TestCase):
             sudoku = generate(min_count=count, size=(width, height))
             self.assertGreaterEqual(sudoku.count(), count)
 
+    def test_generate_invalid_min(self):
+        """Generating a sudoku with to many filled fields raises ValueError."""
+        for width, height in TEST_SIZES:
+            max_count = width**2 * height**2
+            self.assertRaises(
+                ValueError,
+                generate, min_count=max_count+1, size=(width, height))
+
+    def test_invalid_symmetry(self):
+        """Generating a sudoku with invalid symmetry raises ValueError."""
+        self.assertRaises(ValueError, generate, symmetry=2)
+        self.assertRaises(ValueError, generate, symmetry="nice")
+
 
 class GenerateFromTemplateTests(TestCase):
     def test_has_same_pattern(self):
@@ -99,6 +112,7 @@ class GenerateFromTemplateTests(TestCase):
 
     def test_different_sizes(self):
         """A 16x16 template creates a correct 16x16 sudoku."""
+        # TODO: This test seems to timeout on Travis sometimes.
         template = Sudoku.decode(TEMPLATE_16x16)
         self.assertEqual(template.size, (4, 4))
         sudoku = generate_from_template(template, tries=-1)

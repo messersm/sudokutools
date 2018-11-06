@@ -54,7 +54,7 @@ def rate(sudoku):
     """
     steps = []
     solve(sudoku, steps.append)
-    # This raises a ValueError, if the list is empty.
+    # max() raises a ValueError, if the list is empty.
     try:
         return max([RATINGS[step.__class__] for step in steps])
     except ValueError:
@@ -76,10 +76,7 @@ def score(sudoku):
     """
     steps = []
     solve(sudoku, steps.append)
-    try:
-        return sum([RATINGS[step.__class__] for step in steps])
-    except ValueError:
-        return 0
+    return sum([RATINGS[step.__class__] for step in steps])
 
 
 def is_solved(sudoku):

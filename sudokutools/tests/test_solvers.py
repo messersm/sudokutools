@@ -1,8 +1,10 @@
 from unittest import TestCase
 
+from sudokutools.analyze import find_conflicts
 from sudokutools.generate import generate
-from sudokutools.solve import init_candidates
+from sudokutools.solve import bruteforce, init_candidates
 from sudokutools.solvers import (
+    CalculateCandidates,
     NakedSingle, NakedPair, NakedTriple, NakedQuad, NakedQuint,
     HiddenSingle, HiddenPair, HiddenTriple, HiddenQuad, HiddenQuint,
     PointingPair, PointingTriple,
@@ -72,6 +74,13 @@ TEST_SIZES = ((2, 2), (2, 3), (2, 4), (3, 3), (4, 4))
 
 
 class BasicTests(TestCase):
+    def setUp(self):
+        # We generate examples once - this reduces test time a bit.
+        self.examples = []
+        for width, height in TEST_SIZES:
+            count = (width ** 2 * height ** 2) // 2
+            self.examples.append(generate(min_count=count, size=(width, height)))
+
     def test_simple(self):
         """Naked Singles/Tuples, Hidden Singles/Tuples and pointing pairs work.
         """
@@ -84,17 +93,46 @@ class BasicTests(TestCase):
 
     def test_sizes(self):
         """Finding solve steps doesn't raise an exception on different sizes."""
-        for width, height in TEST_SIZES:
-            count = (width ** 2 * height ** 2) // 2
-            sudoku = generate(min_count=count, size=(width, height))
+        for example in self.examples:
+            sudoku = example.copy()
             init_candidates(sudoku)
 
             for cls in SOLVERS:
                 try:
                     steps = list(cls.find(sudoku))
                 except Exception as e:
-                    self.fail("%s.find() failed with: %s" %(
+                    self.fail("%s.find() failed with: %s" % (
                         cls.__name__, str(e)))
+
+    def test_apply_all(self):
+        """A sudoku can be solved, by running apply_all() multiple times."""
+        for example in self.examples:
+            sudoku = example.copy()
+            solution = next(bruteforce(sudoku))
+            while list(sudoku.empty()):
+                for cls in SOLVERS:
+                    cls.apply_all(sudoku)
+            self.assertEqual(sudoku, solution)
+
+    def test_unsolvable(self):
+        """find() doesn't raise an exception on unsolvable sudokus."""
+        for example in self.examples:
+            for cls in SOLVERS:
+                sudoku = example.copy()
+                for row, col in sudoku:
+                    if sudoku[row, col]:
+                        sudoku[(row+1) % sudoku.height, col] = sudoku[row, col]
+                        break
+                # make sure this has conflicts.
+                self.assertNotEqual(list(find_conflicts(sudoku)), [])
+                if cls != CalculateCandidates:
+                    init_candidates(sudoku)
+                try:
+                    steps = list(cls.find(sudoku))
+                except Exception as e:
+                    self.fail("%s.find() failed with: %s" % (
+                        cls.__name__, str(e)))
+
 
 XWING_EXAMPLE = """
 500010070
@@ -177,3 +215,4 @@ class FishTests(TestCase):
         init_candidates(sudoku)
         jellyfishes = list(Jellyfish.find(sudoku))
         self.assertEqual(jellyfishes, JELLYFISHES)
+

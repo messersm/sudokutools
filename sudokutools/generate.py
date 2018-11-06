@@ -45,12 +45,15 @@ def create_solution(size=(3, 3)):
             sudoku[i, j] = numbers[(offset + i) % len(numbers)]
         offset += sudoku.height
 
-    try:
-        return next(bruteforce(sudoku))
-    except StopIteration:
-        print("No solution found for:")
-        print(sudoku)
-        raise
+    return next(bruteforce(sudoku))
+
+    # The code above should never fail. However, if it does, start here:
+    # try:
+    #     return next(bruteforce(sudoku))
+    # except StopIteration:
+    #     print("No solution found for:")
+    #     print(sudoku)
+    #     raise
 
 
 def generate(min_count=0, symmetry=None, size=(3, 3)):

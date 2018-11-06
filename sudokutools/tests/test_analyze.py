@@ -3,7 +3,7 @@ from unittest import TestCase
 from sudokutools.analyze import (
     rate, RATINGS, find_conflicts, is_solved, is_unique, score)
 from sudokutools.generate import create_solution, generate
-from sudokutools.solve import bruteforce
+from sudokutools.solve import bruteforce, init_candidates
 from sudokutools.solvers import SOLVERS
 from sudokutools.sudoku import Sudoku
 
@@ -92,6 +92,10 @@ class RatingTests(TestCase):
         solution = create_solution()
         self.assertEqual(rate(solution), 0)
 
+        # This will also return no CalculateCandidates step.
+        init_candidates(solution)
+        self.assertEqual(rate(solution), 0)
+
     def test_rate_works_on_random_sudoku(self):
         """A random sudoku is rated correctly."""
         sudoku = generate()
@@ -104,6 +108,10 @@ class ScoreTests(TestCase):
     def test_solved_scores_zero(self):
         """A solved sudoku has a score of 0."""
         solution = create_solution()
+        self.assertEqual(score(solution), 0)
+
+        # This will also return no CalculateCandidates step.
+        init_candidates(solution)
         self.assertEqual(score(solution), 0)
 
     def test_score_works_on_random_sudoku(self):
