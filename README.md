@@ -146,13 +146,14 @@ Output:
 
 ### Checking sudokus
 Sudokus are required to have only one solutions, which can be checked using
-``sudokutools.solve.is_unique()``. You can also count the number of solutions
+``sudokutools.analyze.is_unique()``. You can also count the number of solutions
 using ``sudokutools.solve.bruteforce()``.
 Do note, that ``is_unique()`` is much faster than counting the number of
 solutions, since it returns after finding two solutions.
 
 ```python
-from sudokutools.solve import bruteforce, is_unique, find_conflicts
+from sudokutools.analyze import is_unique
+from sudokutools.solve import bruteforce
 from sudokutools.sudoku import Sudoku
 
 SUDOKU = """
@@ -178,12 +179,12 @@ False
 This sudoku has 1540 solutions.
 ```
 
-Finding conflicts can be done using ``sudokutools.solve.find_conflicts()``
+Finding conflicts can be done using ``sudokutools.analyze.find_conflicts()``
 which iterates through all fields containing conflicts, yielding the two
 conflicting fields as well as the conflicting number:
 
 ```python
-from sudokutools.solve import find_conflicts
+from sudokutools.analyze import find_conflicts
 from sudokutools.sudoku import Sudoku
 
 SUDOKU_WITH_CONFLICTS = """
@@ -451,7 +452,7 @@ Output:
       |     2 | 10    |  3    |  9   
 ```
 
-There's much more that you can do, so be sure to check out the documentation.
+There's much more that you can do, so be sure to check out the [documentation](http://sudokutools.readthedocs.io).
 
 ## Sudoku in the Shell
 + [Interactive usage](#interactive-usage)
@@ -560,17 +561,21 @@ $ sudokutools -c "loop 3; generate; encode; solve; encode; loop end"
 ```
 
 ## Road map and changelog
-+ [Version 0.4.0 (planned)](#version-040)
++ [Version 0.5.0 (planned)](#version-050)
++ [Version 0.4.0 (in development)](#version-040)
 + [Version 0.3.0 (current)](#version-030)
 + [Version 0.2.0](#version-020)
 + [Version 0.1.1](#version-011)
 + [Version 0.1](#version-01)
 
-### Version 0.4.0
+### version 0.5.0
 #### Features (planned):
 * More solving methods.
-* Rating and scoring of sudokus.
 * Play mode for the sudokutools shell.
+
+### Version 0.4.0
+#### Features (in development):
+* Rating and scoring of sudokus.
 * Added module ``sudokutools.analyze`` which provides the new ``rate()``,
   ``score()`` and ``is_solved()`` functions.
 * Module ``sudokutools.solve``:
