@@ -1,10 +1,11 @@
 from unittest import TestCase
 
+from sudokutools.analyze import find_conflicts
 from sudokutools.generate import generate
 from sudokutools.solve import bruteforce, dlx, calc_candidates, init_candidates
 from sudokutools.sudoku import Sudoku
 
-from sudokutools.tests.constants import SOLVE_EXAMPLES, NON_UNIQUE
+from sudokutools.tests.constants import SOLVE_EXAMPLES, NON_UNIQUE, UNSOLVABLES
 
 CANDIDATES_EXAMPLE = """
 003020600
@@ -57,6 +58,14 @@ class BruteforceTests(TestCase):
         sol2 = next(solutions)
         self.assertNotEqual(sol1, sol2)
 
+    def test_unsolvable(self):
+        """Bruteforce yields nothing on unsolvable sudokus."""
+        for unsolvable in UNSOLVABLES:
+            sudoku = Sudoku.decode(unsolvable)
+            # make sure this sudoku has conflicts
+            self.assertNotEqual(list(find_conflicts(sudoku)), [])
+            self.assertEqual(list(bruteforce(sudoku)), [])
+
 
 class DLXTests(TestCase):
     def test_examples(self):
@@ -86,6 +95,14 @@ class DLXTests(TestCase):
         sol1 = next(solutions)
         sol2 = next(solutions)
         self.assertNotEqual(sol1, sol2)
+
+    def test_unsolvable(self):
+        """DLX yields nothing on unsolvable sudokus."""
+        for unsolvable in UNSOLVABLES:
+            sudoku = Sudoku.decode(unsolvable)
+            # make sure this sudoku has conflicts
+            self.assertNotEqual(list(find_conflicts(sudoku)), [])
+            self.assertEqual(list(dlx(sudoku)), [])
 
 
 class CompareTests(TestCase):

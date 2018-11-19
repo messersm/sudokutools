@@ -42,7 +42,11 @@ def do_dlx(sudoku):
     for row, col in sudoku:
         n = sudoku[row, col]
         if n:
-            select(X, Y, (row, col, n))
+            # if this raises a KeyError, the sudoku has conflicts.
+            try:
+                select(X, Y, (row, col, n))
+            except KeyError:
+                return
 
     for solution in solve(X, Y, []):
         for (r, c, n) in solution:

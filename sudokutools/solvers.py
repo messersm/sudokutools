@@ -34,7 +34,7 @@ from collections import defaultdict, namedtuple
 from functools import total_ordering
 from itertools import combinations, product
 
-from sudokutools.solve import init_candidates, calc_candidates, bruteforce
+from sudokutools.solve import init_candidates, calc_candidates, dlx
 from sudokutools.sudoku import Sudoku
 
 
@@ -232,7 +232,7 @@ class Bruteforce(_SingleFieldStep):
     @classmethod
     def find(cls, sudoku):
         try:
-            solution = next(bruteforce(sudoku))
+            solution = next(dlx(sudoku))
         except StopIteration:
             return
         for row, col in sudoku.diff(solution):

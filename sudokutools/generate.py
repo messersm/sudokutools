@@ -9,7 +9,7 @@ Functions defined here:
 from random import sample, shuffle
 
 from sudokutools.analyze import is_unique
-from sudokutools.solve import bruteforce
+from sudokutools.solve import dlx
 from sudokutools.sudoku import Sudoku
 
 SYMMETRY = {
@@ -45,7 +45,7 @@ def create_solution(size=(3, 3)):
             sudoku[i, j] = numbers[(offset + i) % len(numbers)]
         offset += sudoku.height
 
-    return next(bruteforce(sudoku))
+    return next(dlx(sudoku))
 
     # The code above should never fail. However, if it does, start here:
     # try:

@@ -9,7 +9,7 @@ Functions defined here:
             a sudoku.
 """
 
-from sudokutools.solve import bruteforce
+from sudokutools.solve import dlx
 from sudokutools.solvers import CalculateCandidates, \
     NakedSingle, NakedPair, NakedTriple, NakedQuad, NakedQuint, \
     HiddenSingle, HiddenPair, HiddenTriple, HiddenQuad, HiddenQuint, \
@@ -100,7 +100,7 @@ def is_unique(sudoku):
     Returns:
         bool: Whether or not the sudoku is unique.
     """
-    solutions = bruteforce(sudoku)
+    solutions = dlx(sudoku)
 
     # If we have no solutions return False.
     try:

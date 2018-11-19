@@ -75,6 +75,15 @@ def bruteforce(sudoku):
         Sudoku: A solution of the sudoku.
     """
 
+    # Check for conflicts, since the algorithm simply
+    # returns invalid solutions otherwise.
+    for row, col in sudoku:
+        value = sudoku[row, col]
+        if value:
+            for (i, j) in sudoku.surrounding_of(row, col, include=False):
+                if sudoku[i, j] == value:
+                    return
+
     solution = sudoku.copy()
     init_candidates(solution)
     for solution in _do_bruteforce(solution):
