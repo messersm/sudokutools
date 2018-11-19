@@ -1,6 +1,7 @@
 from unittest import TestCase
 
-from sudokutools.solve import bruteforce, calc_candidates, init_candidates
+from sudokutools.generate import generate
+from sudokutools.solve import bruteforce, dlx, calc_candidates, init_candidates
 from sudokutools.sudoku import Sudoku
 
 from sudokutools.tests.constants import SOLVE_EXAMPLES, NON_UNIQUE
@@ -55,6 +56,44 @@ class BruteforceTests(TestCase):
         sol1 = next(solutions)
         sol2 = next(solutions)
         self.assertNotEqual(sol1, sol2)
+
+
+class DLXTests(TestCase):
+    def test_examples(self):
+        """DLX solves the given examples."""
+        for example_str, solution_str in SOLVE_EXAMPLES:
+            example = Sudoku.decode(example_str)
+            solution = Sudoku.decode(solution_str)
+            self.assertEqual(list(dlx(example))[0], solution)
+
+    def test_examples_count(self):
+        """DLX yields exactly one solution to the given examples."""
+        for example_str, solution_str in SOLVE_EXAMPLES:
+            example = Sudoku.decode(example_str)
+            solution = Sudoku.decode(solution_str)
+            self.assertEqual(len(list(dlx(example))),1)
+
+    def test_yields_nothing(self):
+        """DLX yields no solution, if a sudoku cannot be solved."""
+        sudoku = Sudoku.decode(SOLVE_EXAMPLES[0][0])
+        sudoku[0, 0] = 5
+        self.assertEqual(len(list(dlx(sudoku))), 0)
+
+    def test_reverse_on_non_unique(self):
+        """DLX yields multiple solutions on non-unique sudokus."""
+        sudoku = Sudoku.decode(NON_UNIQUE)
+        solutions = dlx(sudoku)
+        sol1 = next(solutions)
+        sol2 = next(solutions)
+        self.assertNotEqual(sol1, sol2)
+
+
+class CompareTests(TestCase):
+    def test_compare_with_bruteforce(self):
+        """DLX yields the same solutions as bruteforce."""
+        for i in range(10):
+            sudoku = generate()
+            self.assertEqual(next(bruteforce(sudoku)), next(dlx(sudoku)))
 
 
 class CandidatesTest(TestCase):

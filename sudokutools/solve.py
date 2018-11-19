@@ -2,9 +2,12 @@
 
 Functions defined here:
  * bruteforce(): Solves a sudoku using brute force.
+ * dlx(): Solves a sudoku using the dancing links algorithm-X.
  * calc_candidates(): Calculates candidates of a field in a sudoku.
  * init_candidates(): Sets the candidates for all fields in a sudoku.
 """
+
+from sudokutools.dlx import do_dlx
 
 
 def calc_candidates(sudoku, row, col):
@@ -46,6 +49,20 @@ def init_candidates(sudoku, filled_only=False):
     for row, col in sudoku:
         if not filled_only or sudoku[row, col]:
             sudoku.set_candidates(row, col, calc_candidates(sudoku, row, col))
+
+
+def dlx(sudoku):
+    """Solve the sudoku using the dancing links variant of algorithm-X.
+
+        Args:
+            sudoku (Sudoku): The :class:`Sudoku` instance to solve.
+
+        Yields:
+            Sudoku: A solution of the sudoku.
+    """
+    solution = sudoku.copy()
+    for solution in do_dlx(solution):
+        yield solution.copy()
 
 
 def bruteforce(sudoku):
