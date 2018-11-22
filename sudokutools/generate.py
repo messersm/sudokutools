@@ -83,17 +83,17 @@ def generate(min_count=0, symmetry=None, size=(3, 3)):
         raise ValueError("min_count must be <= %d (%d was given)." % (
             count_limit, min_count))
 
-    solution = create_solution(size=size)
-    sudoku = solution.copy()
-    coords = list(sudoku)
-    shuffle(coords)
-    count = len(sudoku)
-
     try:
         symmetry_func = SYMMETRY[symmetry]
     except KeyError:
         values = ", ".join([str(key) for key in SYMMETRY])
         raise ValueError("symmetry must be one of %s" % values)
+
+    solution = create_solution(size=size)
+    sudoku = solution.copy()
+    coords = list(sudoku)
+    shuffle(coords)
+    count = len(sudoku)
 
     while coords:
         # get next coordinates to change
