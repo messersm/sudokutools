@@ -561,9 +561,9 @@ $ sudokutools -c "loop 3; generate; encode; solve; encode; loop end"
 ```
 
 ## Road map and changelog
-+ [Version 0.5.0 (planned)](#version-050)
-+ [Version 0.4.0 (in development)](#version-040)
-+ [Version 0.3.0 (current)](#version-030)
++ [Version 0.5.0 (in development)](#version-050)
++ [Version 0.4.0 (current)](#version-040)
++ [Version 0.3.0](#version-030)
 + [Version 0.2.0](#version-020)
 + [Version 0.1.1](#version-011)
 + [Version 0.1](#version-01)
