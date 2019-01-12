@@ -13,15 +13,15 @@ script: travis_wait nosetests -v --with-doctest --with-coverage --cover-package=
 after_success: coveralls
 deploy:
   provider: pypi
-  # server: https://upload.pypi.org/legacy/
+  server: https://upload.pypi.org/legacy/
   # Work around broken deploy on travis.
   # See: https://github.com/travis-ci/travis-ci/issues/9303
-  # edge:
-    # branch: v1.8.45
+  edge:
+    branch: v1.8.45
   user: messersm
   password:
     secure: "A/aSUsZTFgf2HEjtPRm6XQgS1CN0NNi5KpoXHDzgVR+HavqwOXd6uv42n7QhIzcsnWl0SxLpR0kQR1+p5R2YKH4WPhC0513i9aDBPoKOuPUB+wH8YtKXbPjDKK3HqDUtMRVHrSQUaKZ/sa2z4qylkVbGvfG86dv1+aql9XC13saKHqNqI2hrcd8ij7+UJVTSBWdjsT5NDveubTNJDgZqe+VlRs55NiGw8riub0fAb9UgGNwNJ6ZFQhABNzT3ZjsNPOhT+AZVCegDS9CMVq+cQ1CoiviI1pY+YupNcZHYL/YuOmuobznevGMEvnsxz3Hd8NjJ6MI5+ghz9e968NgpX+5QpT2aKsBo7eJFbKuFiDw9flXwzdCX7ya629pc4hm80GDfLPVmFJ2AUjF04m+Bhee7ZFFWEWXneRPbW8AKluXPZXdsq9elaHqXf+uBCCFCI8kduyaWLIA4nQkLSkJ8wSIDzSgK9BnUm+dLZu3IbwgoUkTneUdgku0pGdfgrp2jQ8Abd/gYI/EUfZLGNCq8T3AkRBBT/f2gmseBF4UiHjq9GxjEoihSoE5f2SZlRS2OA1zQ8izu+CpiHx0gAXtjvXFR5eZOe18y/4edNA69QdhDIjWYQ2lM5GZ85mcPzevrZWYDK/f69jsTv/XC37uu5C3xTvT4Sxka3hh9LV2GV2Q="
   on:
     tags: true
-    # distributions: sdist
+    distributions: sdist
     repo: messersm/sudokutools
