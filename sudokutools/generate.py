@@ -6,7 +6,8 @@ Functions defined here:
  * generate_from_template(): Create a new sudoku given a template pattern.
 """
 
-from random import sample, shuffle
+from collections import defaultdict
+from random import choice, sample, shuffle
 
 from sudokutools.analyze import is_unique
 from sudokutools.solve import dlx
@@ -26,34 +27,23 @@ def create_solution(size=(3, 3)):
     """Returns a sudoku, without empty or conflicting fields.
     
     Args:
-        size (int, int): region_width and region_height of the filled sudoku.
+        size (int, int): box width and box height of the filled sudoku.
 
     Returns:
         Sudoku: The completely filled Sudoku instance.
     """
     sudoku = Sudoku(size=size)
 
-    # Create a list of numbers and shuffle them.
+    # fill a single box and let dlx do the rest
+    row = choice(range(sudoku.height))
+    col = choice(range(sudoku.width))
     numbers = list(sudoku.numbers)
     shuffle(numbers)
 
-    columns = sample(range(sudoku.width * sudoku.height), sudoku.width)
-
-    offset = 0
-    for col in columns:
-        for i, j in sudoku.column_of(0, col):
-            sudoku[i, j] = numbers[(offset + i) % len(numbers)]
-        offset += sudoku.height
+    for i, j in sudoku.box_of(row, col, include=True):
+        sudoku[i, j] = numbers.pop()
 
     return next(dlx(sudoku))
-
-    # The code above should never fail. However, if it does, start here:
-    # try:
-    #     return next(bruteforce(sudoku))
-    # except StopIteration:
-    #     print("No solution found for:")
-    #     print(sudoku)
-    #     raise
 
 
 def generate(min_count=0, symmetry=None, size=(3, 3)):
