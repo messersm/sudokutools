@@ -83,7 +83,7 @@ import string
 from collections import defaultdict
 
 
-def encode(*coordinates, width=3, height=3, use_boxes=None, sep=",", nsep=""):
+def encode(coordinates, width=3, height=3, use_boxes=None, sep=",", nsep=""):
     """Encode the given coordinates to a string.
 
     Args:
