@@ -4,12 +4,23 @@ from sudokutools.notation import encode
 
 
 class EncodeTests(TestCase):
-    def test_order(self):
+    def test_numbers_are_sorted(self):
         """Coordinates are always shown in a sorted order."""
         self.assertEqual("r1c12", encode(((0, 0), (0, 1))))
         self.assertEqual("r1c12", encode(((0, 1), (0, 0))))
         self.assertEqual("r12c1", encode(((0, 0), (1, 0))))
         self.assertEqual("r12c1", encode(((1, 0), (0, 0))))
+
+    def test_groups_are_sorted(self):
+        """Groups are sorted by the numbers of rows or boxes."""
+        self.assertEqual("r1c1,r10c10", encode(
+            ((0, 0), (9, 9)), width=2, height=5, use_boxes=False))
+        self.assertEqual("r1c1,r10c10", encode(
+            ((9, 9), (0, 0)), width=2, height=5, use_boxes=False))
+        self.assertEqual("b1p1,b10p10", encode(
+            ((0, 0), (9, 9)), width=2, height=5, use_boxes=True))
+        self.assertEqual("b1p1,b10p10", encode(
+            ((9, 9), (0, 0)), width=2, height=5, use_boxes=True))
 
     def test_default_number_sep(self):
         """Numbers > 9 are separated using the default separator."""

@@ -194,6 +194,7 @@ def _join_keys(a_dict):
             if other_value == value:
                 l = [key]
                 l.extend(keys)
+                l.sort()
                 to_add = tuple(l)
                 to_remove = keys
                 break
@@ -210,7 +211,8 @@ def _join_keys(a_dict):
 def _dict_to_str(format_str, a_dict, sep, nsep):
     s = []
 
-    for keys, value in a_dict.items():
+    for keys in sorted(a_dict):
+        value = a_dict[keys]
         keys_str = nsep.join([str(k + 1) for k in sorted(keys)])
         value_str = nsep.join([str(v + 1) for v in sorted(value)])
         s.append(format_str % (keys_str, value_str))
