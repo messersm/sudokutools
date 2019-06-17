@@ -218,7 +218,3 @@ def _dict_to_str(format_str, a_dict, sep, nsep):
         s.append(format_str % (keys_str, value_str))
 
     return sep.join(s)
-
-
-if __name__ == '__main__':
-    print(encode([(0, 0), (0, 1), (0, 2), (1, 2)]))
