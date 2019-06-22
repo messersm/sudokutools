@@ -9,12 +9,47 @@ from ast import literal_eval
 from collections import namedtuple
 
 from sudokutools import __version__
+from sudokutools.analyze import rate, is_solved
+from sudokutools.notation import decode_action
 from sudokutools.generate import generate, generate_from_template
 from sudokutools.solve import bruteforce, init_candidates
 from sudokutools.sudoku import Sudoku, view
 
 if sys.version_info[0] <= 2:
     input = raw_input
+
+
+class GameShell(object):
+    def __init__(self):
+        self.running = True
+        self.sudoku = None
+
+    def startup(self):
+        print("sudokutools game shell %s" % __version__)
+        print("For a list of available commands type: help")
+
+        self.sudoku = generate()
+        print("Generating new sudoku. Rating: %d/10" % rate(self.sudoku))
+        init_candidates(self.sudoku)
+
+    def run(self):
+        self.startup()
+
+        last_command = None
+
+        while self.running:
+            print(view(self.sudoku) + "\n")
+            print("> ", end="")
+            command = input()
+            try:
+                action = decode_action(
+                    command, self.sudoku.width, self.sudoku.height)
+                print(action)
+                action(self.sudoku)
+            except ValueError as e:
+                print(e)
+
+            print("")
 
 
 #
@@ -208,7 +243,7 @@ class Shell(object):
     def run(self):
         if self.interactive:
             self._print("sudokutools shell %s" % __version__)
-            self._print("For a list of available command type: help")
+            self._print("For a list of available commands type: help")
 
         lines = ""
         while self.running:
