@@ -82,6 +82,8 @@ import string
 
 from collections import defaultdict
 
+from sudokutools.actions import RemoveCandidates, SetNumber
+
 
 def encode(coordinates, width=3, height=3, use_boxes=None, sep=",", nsep=""):
     """Encode the given coordinates to a string.
@@ -319,6 +321,37 @@ def _decode_single(group, width=3, height=3, nsep=""):
                 all_funcs[key](number, width=width, height=height))
 
     return set.intersection(*all_sets.values())
+
+
+def encode_action(action, width=3, height=3):
+    if isinstance(action, SetNumber):
+        s = encode(action.coordinates, width=width, height=height)
+        s += "=" + action.number
+        return s
+    elif isinstance(action, RemoveCandidates):
+        s = encode(action.coordinates, width=width, height=height)
+        s += "<>" + "".join(sorted(action.candidates))
+
+
+def decode_action(s, width=3, height=3):
+    s = s.strip()
+    if s.startswith("-"):
+        left, sep, right = s.partition(" ")
+        coordinates = decode(right, width=width, height=height)
+        candidates = [int(c) for c in left]
+        return RemoveCandidates(coordinates, candidates)
+    elif "<>" in s:
+        left, sep, right = s.partition("<>")
+        candidates = [int(c) for c in right]
+        coordinates = decode(left, width=width, height=height)
+        return RemoveCandidates(coordinates, candidates)
+    elif "=" in s:
+        left, sep, right = s.partition("=")
+        number = int(right)
+        coordinates = decode(left, width=width, height=height)
+        return SetNumber(coordinates, number)
+    else:
+        raise ValueError("Cannot decode action '%s'" % s)
 
 
 def _join_keys(a_dict):
