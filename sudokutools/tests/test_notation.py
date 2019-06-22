@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from sudokutools.notation import encode
+from sudokutools.notation import decode, encode
 
 
 class EncodeTests(TestCase):
@@ -75,3 +75,9 @@ class EncodeTests(TestCase):
         self.assertEqual("b1p7", encode(((2, 0), ), height=3, use_boxes=True))
         self.assertEqual("b3p1", encode(((2, 0), ), height=2, use_boxes=True))
 
+
+class DecodeTests(TestCase):
+    def test_split_groups(self):
+        self.assertEqual(((0, 0), (0, 1), (8, 8)), decode("r1c12,r9c9"))
+        self.assertEqual(((0, 0), (0, 1), (9, 9)), decode(
+            "r1c1,2,r10c10", width=2, height=5))

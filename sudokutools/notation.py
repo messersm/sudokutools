@@ -70,8 +70,8 @@ For a Sudoku with 4x2 boxes it looks like this::
     +-------------------+-------------------+
 
 Any combination of these techniques is permitted. So "b1r1" refers
-to the fields r1c1, r1c2, r1c3 where as "r1p2" refers to r1c2, r1c5 and r1c9
-and "b1" refers to all fields in the first box.
+to the fields r1c1, r1c2, r1c3 where as "r1p2" refers to r1c2, r1c5 and r1c8
+in a standard Sudoku and "b1" refers to all fields in the first box.
 
 If the number of rows, columns or boxes is greater than 9, numbers
 must be separated with a separation character, which defaults to ",".
@@ -148,40 +148,177 @@ def encode(coordinates, width=3, height=3, use_boxes=None, sep=",", nsep=""):
         return _dict_to_str("r%sc%s", _join_keys(rows), sep, nsep)
 
 
-def decode(s, width=3, height=3, sep=",", nsep=","):
+def decode(s, width=3, height=3, sep=",", nsep=""):
     """Decode a string into a tuple of coordinates.
 
     Args:
-        s: A string describing a set of coordinates.
+        s (str): Coordinates in rncn and bnpn notation.
 
     Returns:
         A tuple of coordinates described by the string s.
 
+    Note::
+        decode() will handle the same separator for groups and
+        numbers just fine, because this is decided by the following
+        character.
     """
-    raise NotImplementedError("decode() is not implemented yet.")
+    if int(width) != width or int(height) != height:
+        raise ValueError("width and height must be round integers.")
+    elif width < 1 or height < 1:
+        raise ValueError("width and height must be >= 1.")
 
-    rows = []
-    columns = []
-    boxes = []
-    parts = []
+    length = width * height
 
-    expect_number = False
-    current_list = None
+    if not nsep:
+        if length > 9:
+            nsep = ","
+        else:
+            nsep = ""
 
-    for c in s:
-        if expect_number and c not in string.digits:
-            pass
-        if c in string.ascii_letters:
-            if c == "r":
-                current_list = rows
-            elif c == "c":
-                current_list = columns
-            elif c == "b":
-                current_list = boxes
-            elif c == "p":
-                pass
-            else:
-                raise ValueError("Unknown %s (Use 'r', 'c' or 'b'.)")
+    # remove whitespace from the string if
+    # there is none present in the separators.
+    if not any([c in sep for c in string.whitespace]) and \
+       not any([c in nsep for c in string.whitespace]):
+        s = s.replace(string.whitespace, "")
+
+    # Split multiple groups.
+    groups = [s]
+    for c in "rcbp":
+        new_groups = []
+
+        for group in groups:
+            for i, g in enumerate(group.split(sep + c)):
+                if i > 0:
+                    new_groups.append(c + g)
+                else:
+                    new_groups.append(g)
+        groups = new_groups
+
+    coordinates = set()
+    for group in groups:
+        coordinates.update(
+            _decode_single(group, width=width, height=height, nsep=nsep))
+
+    return tuple(sorted(coordinates))
+
+
+def the_row(row, width=3, height=3):
+    """Return all coordinates of the given row."""
+    if not 0 <= row < width * height:
+        raise ValueError(
+            "row must be less equal 0 and less than %d" % width * height)
+
+    return [(row, c) for c in range(width * height)]
+
+
+def the_column(col, width=3, height=3):
+    """Return all coordinates of the given column."""
+    if not 0 <= col < width * height:
+        raise ValueError(
+            "col must be less equal 0 and less than %d" % width * height)
+
+    return [(r, col) for r in range(width * height)]
+
+
+def the_box(box, width=3, height=3):
+    """Return all coordinates of the given box."""
+    if not 0 <= box < width * height:
+        raise ValueError(
+            "box must be less equal 0 and less than %d" % width * height)
+
+    x = (box % height) * width
+    y = (box // height) * height
+    return [(y + i, x + j) for i in range(height) for j in range(width)]
+
+
+def the_part(part, width=3, height=3):
+    """Return the coordinates of the given part in all boxes"""
+    if not 0 <= part < width * height:
+        raise ValueError(
+            "part must be less equal 0 and less than %d" % width * height)
+
+    x = (part % width)
+    y = (part // width)
+
+    return [(y + i, x + j * width) for i in range(width) for j in range(height)]
+
+
+def _decode_single(group, width=3, height=3, nsep=""):
+    """Decode a single group string into a set of coordinates."""
+
+    all_numbers = {
+        'r': [],
+        'c': [],
+        'b': [],
+        'p': [],
+    }
+
+    all_funcs = {
+        'r': the_row,
+        'c': the_column,
+        'b': the_box,
+        'p': the_part
+    }
+
+    current = ""        # The current item (r, c, b or p)
+    present = ""        # A string containing all qualifiers already parsed.
+    number_str = ""     # An accumulation of all numbers for the current item.
+
+    for c in group:
+        if c in present:
+            raise ValueError(
+                "Malformed group '%s'. '%s' has multiple occurrences." %
+                (group, c))
+
+        if c in all_numbers:
+            if current:
+                if not nsep:
+                    numbers = [int(n)-1 for n in number_str]
+                else:
+                    numbers = [int(n)-1 for n in number_str.split(nsep)]
+
+                if not numbers:
+                    raise ValueError(
+                        "Malformed group '%s'. No numbers given for '%s'" %
+                        (group, current))
+
+                all_numbers[current] = numbers
+
+            present += current
+            number_str = ""
+            current = c
+
+        elif c in string.digits or c in nsep:
+            if not current:
+                raise ValueError(
+                    "Malformed group '%s'. '%s' is illegal at this position." %
+                    (group, c))
+            number_str += c
+
+        else:
+            raise ValueError(
+                "Malformed group '%s'. Illegal character '%s'." %
+                (group, c))
+
+    if current:
+        if not nsep:
+            numbers = [int(n) - 1 for n in number_str]
+        else:
+            numbers = [int(n) - 1 for n in number_str.split(nsep)]
+
+        all_numbers[current] = numbers
+
+    if not present:
+        raise ValueError("Empty group '%s'" % group)
+
+    all_sets = defaultdict(lambda: set())
+    for key, numbers in all_numbers.items():
+        # A set will only be added, if the
+        for number in numbers:
+            all_sets[key].update(
+                all_funcs[key](number, width=width, height=height))
+
+    return set.intersection(*all_sets.values())
 
 
 def _join_keys(a_dict):
