@@ -9,6 +9,7 @@ from ast import literal_eval
 from collections import namedtuple
 
 from sudokutools import __version__
+from sudokutools.actions import SetNumber, RemoveCandidates
 from sudokutools.analyze import rate, is_solved, find_conflicts
 from sudokutools.notation import decode_action, encode
 from sudokutools.generate import generate, generate_from_template
@@ -25,12 +26,24 @@ class GameShell(object):
         self.running = True
 
         self.settings = {
-            "autocheck": (False, "Automatically check for cells different from the solution."),
-            "autoconflicts": (True, "Automatically check for conflicts."),
-            "autoremove": (True, "Automatically remove candidates in other cells if a number is set."),
-            "autoset": (True, "Automatically set the number of a cell if only one candidate remains."),
-            "dim": ((3, 3), "The box dimensions of a new Sudoku."),
-            "rating": ((1, 10), "Minimal and maximum rating of a new Sudoku.")
+            "autocandidates": True,
+            "autocheck": False,
+            "autoconflicts": True,
+            "autoremove": True,
+            "autoset": False,
+            "dim": (3, 3),
+            "rating": (1, 10),
+        }
+
+        # descriptions for the settings above
+        self.settings_desc = {
+            "autocandidates": "Automatically calculate candidates for a new Sudoku.",
+            "autocheck": "Automatically check for cells different from the solution.",
+            "autoconflicts": "Automatically check for conflicts.",
+            "autoremove": "Automatically remove candidates in other cells if a number is set.",
+            "autoset": "Automatically set the number of a cell if only one candidate remains.",
+            "dim": "The box dimensions of a new Sudoku.",
+            "rating": "Minimal and maximum rating of a new Sudoku.",
         }
 
         self.hints = None
@@ -42,19 +55,28 @@ class GameShell(object):
 
         self.solution = None
 
-    def startup(self):
-        print("sudokutools game shell %s" % __version__)
-        print("For a list of available commands type: help")
-
+    def new_sudoku(self):
+        """Creates a new Sudoku"""
         self.sudokus = [generate()]
         self.index = 0
         self.solution = next(bruteforce(self.sudokus[0]))
+        self.hints = None
+        self.hinted_sudoku = None
+
         print("Generating new sudoku. Rating: %d/10" % rate(self.sudokus[0]))
+        if self.settings.get("autocandidates", False):
+            init_candidates(self.sudokus[0])
+            self.autofill(self.sudokus[0], verbose=False)
+        else:
+            init_candidates(self.sudokus[0], filled_only=True)
+
+    def get_setting(self, key):
+        return self.settings[key][0]
 
     def run(self):
-        self.startup()
-
-        last_command = None
+        print("sudokutools game shell %s" % __version__)
+        print("For a list of available commands type: help")
+        self.new_sudoku()
 
         while self.running:
             sudoku = self.sudokus[self.index].copy(include_candidates=True)
@@ -120,8 +142,9 @@ class GameShell(object):
                     action = decode_action(
                         line, sudoku.width, sudoku.height)
                     action(sudoku)
+                    self.autofill(sudoku, True)
                 except ValueError as e:
-                    print(e)
+                    print("Unknown command '%s'" % line)
 
             # add the new sudoku to the sudokus list, if anything changed.
             if command not in ("undo", "redo"):
@@ -129,6 +152,37 @@ class GameShell(object):
                     self.sudokus = self.sudokus[:self.index + 1]
                     self.sudokus.append(sudoku)
                     self.index += 1
+
+    def autofill(self, sudoku, verbose=False):
+        changed = True
+        while changed:
+            changed = False
+
+            if self.settings.get("autoremove", False):
+                for row, col in sudoku.filled():
+                    value = sudoku[(row, col)]
+
+                    surr = sudoku.surrounding_of(row, col, False)
+                    coordinates = []
+                    for r, c in surr:
+                        cand = sudoku.get_candidates(r, c)
+                        if value in cand:
+                            sudoku.remove_candidates(r, c, {value})
+                            coordinates.append((r, c))
+                            changed = True
+                    if verbose and coordinates:
+                        print("autoremove: %s<>%s" % (encode(coordinates), value))
+
+            if self.settings.get("autoset", False):
+                for row, col in sudoku.empty():
+                    candidates = sudoku.get_candidates(row, col)
+                    if len(candidates) == 1:
+                        for value in candidates:
+                            sudoku[(row, col)] = value
+                            if verbose:
+                                print("autoset: %s=%s" % (
+                                    encode(((row, col),)), value))
+                            changed = True
 
 
 #

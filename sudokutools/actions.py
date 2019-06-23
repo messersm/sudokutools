@@ -20,6 +20,7 @@ class SetNumber(object):
     def __call__(self, sudoku):
         for row, col in self.coordinates:
             sudoku.set_number(row, col, self.number)
+            sudoku.set_candidates(row, col, {self.number})
 
     def __str__(self):
         return "SetNumber(%s, %s)" % (
