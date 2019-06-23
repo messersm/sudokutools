@@ -83,6 +83,7 @@ import string
 from collections import defaultdict
 
 from sudokutools.actions import RemoveCandidates, SetNumber
+from sudokutools.coordinates import the_row, the_column, the_box, the_part
 
 
 def encode(coordinates, width=3, height=3, use_boxes=None, sep=",", nsep=""):
@@ -202,47 +203,6 @@ def decode(s, width=3, height=3, sep=",", nsep=""):
             _decode_single(group, width=width, height=height, nsep=nsep))
 
     return tuple(sorted(coordinates))
-
-
-def the_row(row, width=3, height=3):
-    """Return all coordinates of the given row."""
-    if not 0 <= row < width * height:
-        raise ValueError(
-            "row must be less equal 0 and less than %d" % width * height)
-
-    return [(row, c) for c in range(width * height)]
-
-
-def the_column(col, width=3, height=3):
-    """Return all coordinates of the given column."""
-    if not 0 <= col < width * height:
-        raise ValueError(
-            "col must be less equal 0 and less than %d" % width * height)
-
-    return [(r, col) for r in range(width * height)]
-
-
-def the_box(box, width=3, height=3):
-    """Return all coordinates of the given box."""
-    if not 0 <= box < width * height:
-        raise ValueError(
-            "box must be less equal 0 and less than %d" % width * height)
-
-    x = (box % height) * width
-    y = (box // height) * height
-    return [(y + i, x + j) for i in range(height) for j in range(width)]
-
-
-def the_part(part, width=3, height=3):
-    """Return the coordinates of the given part in all boxes"""
-    if not 0 <= part < width * height:
-        raise ValueError(
-            "part must be less equal 0 and less than %d" % width * height)
-
-    x = (part % width)
-    y = (part // width)
-
-    return [(y + i, x + j * width) for i in range(width) for j in range(height)]
 
 
 def _decode_single(group, width=3, height=3, nsep=""):
