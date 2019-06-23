@@ -526,6 +526,16 @@ class Sudoku(object):
                 range(self.height), range(self.width))
                 if grid_y + i != row and grid_x + j != col]
 
+    def equals(self, other, candidates=False):
+        for row, col in self:
+            if self[(row, col)] != other[(row, col)]:
+                return False
+            if candidates and self.get_candidates(row, col) != \
+                    other.get_candidates(row, col):
+                return False
+
+        return True
+
 
 def view(
         sudoku,
