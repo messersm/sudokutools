@@ -9,10 +9,11 @@ from ast import literal_eval
 from collections import namedtuple
 
 from sudokutools import __version__
-from sudokutools.analyze import rate, is_solved
-from sudokutools.notation import decode_action
+from sudokutools.analyze import rate, is_solved, find_conflicts
+from sudokutools.notation import decode_action, encode
 from sudokutools.generate import generate, generate_from_template
 from sudokutools.solve import bruteforce, init_candidates
+from sudokutools.solvers import hints
 from sudokutools.sudoku import Sudoku, view
 
 if sys.version_info[0] <= 2:
@@ -22,15 +23,33 @@ if sys.version_info[0] <= 2:
 class GameShell(object):
     def __init__(self):
         self.running = True
-        self.sudoku = None
+
+        self.settings = {
+            "autocheck": (False, "Automatically check for cells different from the solution."),
+            "autoconflicts": (True, "Automatically check for conflicts."),
+            "autoremove": (True, "Automatically remove candidates in other cells if a number is set."),
+            "autoset": (True, "Automatically set the number of a cell if only one candidate remains."),
+            "dim": ((3, 3), "The box dimensions of a new Sudoku."),
+            "rating": ((1, 10), "Minimal and maximum rating of a new Sudoku.")
+        }
+
+        self.hints = None
+        self.hinted_sudoku = None
+
+        # used for undo and redo:
+        self.sudokus = []
+        self.index = 0
+
+        self.solution = None
 
     def startup(self):
         print("sudokutools game shell %s" % __version__)
         print("For a list of available commands type: help")
 
-        self.sudoku = generate()
-        print("Generating new sudoku. Rating: %d/10" % rate(self.sudoku))
-        init_candidates(self.sudoku)
+        self.sudokus = [generate()]
+        self.index = 0
+        self.solution = next(bruteforce(self.sudokus[0]))
+        print("Generating new sudoku. Rating: %d/10" % rate(self.sudokus[0]))
 
     def run(self):
         self.startup()
@@ -38,18 +57,78 @@ class GameShell(object):
         last_command = None
 
         while self.running:
-            print(view(self.sudoku) + "\n")
+            sudoku = self.sudokus[self.index].copy(include_candidates=True)
+            print(view(sudoku) + "\n")
             print("> ", end="")
-            command = input()
-            try:
-                action = decode_action(
-                    command, self.sudoku.width, self.sudoku.height)
-                print(action)
-                action(self.sudoku)
-            except ValueError as e:
-                print(e)
+            line = input()
+            splitted = line.split()
+            command = splitted[0]
 
-            print("")
+            if command == "hint":
+                if self.hints is None or self.hinted_sudoku != sudoku:
+                    self.hinted_sudoku = sudoku.copy(include_candidates=True)
+                    self.hints = hints(sudoku)
+                try:
+                    print(next(self.hints))
+                except StopIteration:
+                    print("No more hints available.")
+            elif command == "candidates":
+                init_candidates(sudoku)
+            elif command == "conflicts":
+                listed = []
+
+                for (r1, c1), (r2, c2), v in find_conflicts(sudoku):
+                    conflict = {(r1, c1), (r2, c2)}, v
+                    if conflict in listed:
+                        continue
+                    else:
+                        listed.append(conflict)
+
+                    s = "[F]" + encode(
+                        ((r1, c1), ), sudoku.width, sudoku.height)
+                    s += " = " + encode(
+                        ((r2, c2), ), sudoku.width, sudoku.height)
+                    s += " = " + str(v)
+                    print(s)
+            elif command == "settings":
+                for key in sorted(self.settings):
+                    value, desc = self.settings[key]
+                    s = "%s = %s" % (key, value)
+                    s = s.ljust(20, " ")
+                    s += " # %s" % desc
+                    print(s)
+            elif command == "check":
+                for coord in sudoku:
+                    value = sudoku[coord]
+                    if value != 0 and value != self.solution[coord]:
+                        s = "[F] " + encode(
+                            (coord, ), sudoku.width, sudoku.height)
+                        s += " = " + str(value)
+                        print(s)
+            elif command == "undo":
+                if self.index == 0:
+                    print("Nothing to undo.")
+                else:
+                    self.index -= 1
+            elif command == "redo":
+                if self.index + 1 == len(self.sudokus):
+                    print("Nothing to redo.")
+                else:
+                    self.index += 1
+            else:
+                try:
+                    action = decode_action(
+                        line, sudoku.width, sudoku.height)
+                    action(sudoku)
+                except ValueError as e:
+                    print(e)
+
+            # add the new sudoku to the sudokus list, if anything changed.
+            if command not in ("undo", "redo"):
+                if not sudoku.equals(self.sudokus[self.index], candidates=True):
+                    self.sudokus = self.sudokus[:self.index + 1]
+                    self.sudokus.append(sudoku)
+                    self.index += 1
 
 
 #
