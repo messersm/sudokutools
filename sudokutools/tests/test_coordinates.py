@@ -64,7 +64,7 @@ class BoxTests(TestCase):
 
             for box, coords in enumerate(boxes):
                 self.assertEqual(
-                    tuple(coords), the_box(box, width=width, height=height))
+                    coords, the_box(box, width=width, height=height))
 
 
 class PartTests(TestCase):
@@ -78,5 +78,5 @@ class PartTests(TestCase):
 
             for part, coords in enumerate(parts):
                 self.assertEqual(
-                    tuple(coords), the_part(part, width=width, height=height))
+                    coords, the_part(part, width=width, height=height))
 

@@ -210,5 +210,6 @@ class DecodeTests(TestCase):
             for width, height in TEST_SIZES:
                 for num in range(width * height):
                     s = "%s%d" % (char, num+1)
-                    self.assertEqual(func(num, width=width, height=height),
-                                     decode(s, width=width, height=height))
+                    self.assertEqual(
+                        tuple(func(num, width=width, height=height)),
+                        decode(s, width=width, height=height))
