@@ -584,3 +584,19 @@ def solve(sudoku, report=lambda step: None):
             break
 
     return solution
+
+
+def hints(sudoku):
+    """Yield all available solve steps for the current state of a sudoku.
+
+    Args:
+        sudoku (Sudoku): The sudoku to get hints for.
+
+    Yields:
+        SolveStep: A step available for the given sudoku in the current state.
+    """
+    for solver in SOLVERS:
+        if solver == Bruteforce:
+            continue
+        for step in solver.find(sudoku):
+            yield step
