@@ -309,13 +309,13 @@ def _decode_single(group, width=3, height=3, nsep=""):
             numbers = [int(n) - 1 for n in number_str.split(nsep)]
 
         all_numbers[current] = numbers
-
-    if not present:
+    elif not present:
         raise ValueError("Empty group '%s'" % group)
 
     all_sets = defaultdict(lambda: set())
     for key, numbers in all_numbers.items():
         # A set will only be added, if the
+        # list in all_numbers is not empty.
         for number in numbers:
             all_sets[key].update(
                 all_funcs[key](number, width=width, height=height))
