@@ -122,7 +122,6 @@ class BasicTests(TestCase):
                 for row, col in sudoku:
                     if sudoku[row, col]:
                         sudoku[(row+1) % sudoku.height, col] = sudoku[row, col]
-                        print(sudoku)
                         break
                 # make sure this has conflicts.
                 self.assertNotEqual(list(find_conflicts(sudoku)), [])
