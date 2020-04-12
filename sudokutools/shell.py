@@ -107,9 +107,9 @@ class GameShell(object):
                         listed.append(conflict)
 
                     s = "[F]" + encode(
-                        ((r1, c1), ), sudoku.width, sudoku.height)
+                        ((r1, c1), ), sudoku.box_width, sudoku.box_height)
                     s += " = " + encode(
-                        ((r2, c2), ), sudoku.width, sudoku.height)
+                        ((r2, c2), ), sudoku.box_width, sudoku.box_height)
                     s += " = " + str(v)
                     print(s)
             elif command == "settings":
@@ -124,7 +124,7 @@ class GameShell(object):
                     value = sudoku[coord]
                     if value != 0 and value != self.solution[coord]:
                         s = "[F] " + encode(
-                            (coord, ), sudoku.width, sudoku.height)
+                            (coord, ), sudoku.box_width, sudoku.box_height)
                         s += " = " + str(value)
                         print(s)
             elif command == "undo":
@@ -140,7 +140,7 @@ class GameShell(object):
             else:
                 try:
                     action = decode_action(
-                        line, sudoku.width, sudoku.height)
+                        line, sudoku.box_width, sudoku.box_height)
                     action(sudoku)
                     self.autofill(sudoku, True)
                 except ValueError as e:

@@ -369,8 +369,8 @@ Output:
 ### Different sudoku sizes
 ``sudokutools`` supports different sizes for sudokus. All methods and
 function, which generate or parse sudokus are able to work with them.
-In the ``sudokutools`` library "size" always refers to the size of a single
-region. That means, standard sudokus have a size of 3x3.
+In the ``sudokutools`` library "box_size" always refers to the size of a single
+box. That means, standard sudokus have a box_size of 3x3.
 
 ```python
 from sudokutools.sudoku import Sudoku
@@ -395,12 +395,12 @@ EXAMPLE_16x16 = """
 """
 
 sudoku = Sudoku.decode(EXAMPLE_16x16, number_sep=" ")
-print(sudoku.size)
+print(sudoku.box_size)
 print(sudoku)
 ```
 
-``Sudoku.decode()`` also provides a ``size`` keyword argument, which can
-be used, if the size of a region in the sudoku is arbitrary (e.g. 2x3 or 3x2).
+``Sudoku.decode()`` also provides a ``box_size`` keyword argument, which can
+be used, if the size of a box in the sudoku is arbitrary (e.g. 2x3 or 3x2).
 
 Output:
 ```
@@ -426,14 +426,14 @@ Output:
  6  9  8    |    10  2    |  7 12 16    | 14 13  1  4
 ```
 
-You can also generate sudokus of different sizes, using the ``size`` keyword
+You can also generate sudokus of different sizes, using the ``box_size`` keyword
 argument of the ``generate()`` function, which takes a pair
-indicating ``(width, height)`` of a region.
+indicating ``(width, height)`` of a box.
 
 ```python
 from sudokutools.generate import generate
 
-sudoku = generate(size=(2, 5))
+sudoku = generate(box_size=(2, 5))
 print(sudoku)
 ```
 
@@ -572,6 +572,13 @@ $ sudokutools -c "loop 3; generate; encode; solve; encode; loop end"
 #### Features (planned):
 * More solving methods.
 * Play mode for the sudokutools shell.
+
+* **API change** in modules ``sudokutools.sudoku`` and ``sudoku.generate``:
+  parameter ``size`` has been renamed to ``box_size`` in:
+  * ``Sudoku.__init__()``
+  * ``Sudoku.decode()``
+  * ``generate()``
+  * ``create_solution``
 
 ### Version 0.4.0
 > This is the current ``sudokutools`` version.

@@ -22,7 +22,7 @@ from itertools import product
 
 def do_dlx(sudoku):
     """ An efficient Sudoku solver using Algorithm X (works _in_place_)."""
-    R, C = sudoku.height, sudoku.width
+    R, C = sudoku.box_height, sudoku.box_width
     N = R * C
     X = ([("rc", rc) for rc in product(range(N), range(N))] +
          [("rn", rn) for rn in product(range(N), range(1, N + 1))] +

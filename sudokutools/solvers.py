@@ -418,8 +418,8 @@ class PointingTuple(SolveStep):
 
     @classmethod
     def __find_in_box(cls, sudoku, box):
-        row = (box // sudoku.height) * sudoku.height
-        col = (box % sudoku.height) * sudoku.width
+        row = (box // sudoku.box_height) * sudoku.box_height
+        col = (box % sudoku.box_height) * sudoku.box_width
 
         box_coords = sudoku.box_of(row, col)
 

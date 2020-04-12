@@ -48,21 +48,20 @@ class Sudoku(object):
      * decode()
     """
 
-    def __init__(self, size=(3, 3)):
+    def __init__(self, box_size=(3, 3)):
         """Create a new empty sudoku.
 
         Args:
-            size (int, int): box_width, box_height for the new sudoku.
-                             A standard 9x9 sudoku has size=(3, 3).
+            box_size (int, int): box_width, box_height for the new sudoku.
+                                 A standard 9x9 sudoku has size=(3, 3).
         """
         try:
-            self.size = tuple(size)
-            self.width = size[0]
-            self.height = size[1]
-            self.indices = tuple(range(size[0] * size[1]))
-            self.numbers = tuple(range(1, size[0] * size[1] + 1))
+            self.box_size = tuple(box_size)
+            self.box_width, self.box_height = box_size
+            self.indices = tuple(range(box_size[0] * box_size[1]))
+            self.numbers = tuple(range(1, box_size[0] * box_size[1] + 1))
         except (IndexError, KeyError):
-            raise ValueError("Invalid sudoku size: %s" % size)
+            raise ValueError("Invalid sudoku box_size: %s" % box_size)
         self.__numbers = [[0] * len(self.indices) for _ in self.indices]
         self.__candidates = [[frozenset()] * len(self.indices)
                              for _ in self.indices]
@@ -131,7 +130,7 @@ class Sudoku(object):
         Returns:
             Sudoku: The new sudoku instance.
         """
-        sudoku = Sudoku(size=self.size)
+        sudoku = Sudoku(box_size=self.box_size)
         for row, col in self:
             sudoku[row, col] = self[row, col]
 
@@ -207,7 +206,7 @@ class Sudoku(object):
         Returns:
             int: The number of fields in this sudoku.
         """
-        return self.width ** 2 * self.height ** 2
+        return self.box_width ** 2 * self.box_height ** 2
 
     def get_number(self, row, col):
         """Same as sudoku[row, col]."""
@@ -289,19 +288,20 @@ class Sudoku(object):
         return s
 
     @classmethod
-    def decode(cls, s, empty="0", number_sep=None, sudoku_sep="|", candidate_sep=",", size=None):
+    def decode(cls, s, empty="0", number_sep=None, sudoku_sep="|", candidate_sep=",", box_size=None):
         """Create a new sudoku from the string s.
 
         Args:
-            s (str): A string representing the sudoku (see below).
-            empty (char): A character representing empty fields.
-            sudoku_sep (char): A character, which separates field information
-                               from candidate information.
+            s (str):              A string representing the sudoku (see below).
+            empty (char):         A character representing empty fields.
+            sudoku_sep (char):    A character, which separates field information
+                                  from candidate information.
             candidate_sep (char): A character separating the candidate lists.
-            size (int, int): (width, height) of the new sudoku. If not given
-                             This will be calculated automatically, which
-                             may lead to wrong results. (It will always
-                             work as intended if width == height.)
+            box_size (int, int): box_width and box_height of the new sudoku.
+                                 If not provided this will be calculated
+                                 automatically, which may lead to wrong results.
+                                 (It will always work as intended if width ==
+                                 height.)
 
         Returns:
             Sudoku: The newly created sudoku.
@@ -358,7 +358,7 @@ class Sudoku(object):
             candidate_str = ""
 
         # try to get size automatically:
-        if size is None:
+        if box_size is None:
             if number_sep:
                 count = len(sudoku_str.split(number_sep))
             else:
@@ -373,7 +373,7 @@ class Sudoku(object):
             length = int(length)
             width = length**0.5
             if width.is_integer():
-                size = int(width), int(width)
+                box_size = int(width), int(width)
             else:
                 for i in range(2, length+1):
                     if length % i == 0:
@@ -381,10 +381,10 @@ class Sudoku(object):
                         break
                 if width == length:
                     raise ValueError("Invalid row length: %d" % length)
-                size = (width, length // width)
+                box_size = (width, length // width)
 
         # read sudoku fields
-        sudoku = Sudoku(size=size)
+        sudoku = Sudoku(box_size=box_size)
         col = 0
         row = 0
 
@@ -400,10 +400,10 @@ class Sudoku(object):
                 sudoku[row, col] = int(item)
 
             col += 1
-            if col >= sudoku.width * sudoku.height:
+            if col >= sudoku.box_width * sudoku.box_height:
                 row += 1
                 col = 0
-            if row >= sudoku.width * sudoku.height:
+            if row >= sudoku.box_width * sudoku.box_height:
                 break
 
         # read candidates if any
@@ -421,10 +421,10 @@ class Sudoku(object):
                 candidates = [int(item) for item in c]
             sudoku.set_candidates(row, col, candidates)
             col += 1
-            if col == sudoku.width * sudoku.height:
+            if col == sudoku.box_width * sudoku.box_height:
                 col = 0
                 row += 1
-            if row == sudoku.width * sudoku.height:
+            if row == sudoku.box_width * sudoku.box_height:
                 break
 
         return sudoku
@@ -439,7 +439,7 @@ class Sudoku(object):
         Returns:
             int: The index of the box, in which the field (row, col) lies.
         """
-        return col // self.width + row - (row % self.height)
+        return col // self.box_width + row - (row % self.box_height)
 
     def column_of(self, row, col, include=True):
         """Return all coordinates in the column of (col, row) as a list.
@@ -481,11 +481,11 @@ class Sudoku(object):
             list of (int, int): list of pairs (row, column) of all fields in
                                 the same box (region).
         """
-        grid_x = col - (col % self.width)
-        grid_y = row - (row % self.height)
+        grid_x = col - (col % self.box_width)
+        grid_y = row - (row % self.box_height)
 
         coords = [(grid_y + i, grid_x + j)
-                  for i in range(self.height) for j in range(self.width)]
+                  for i in range(self.box_height) for j in range(self.box_width)]
         if not include:
             coords.remove((row, col))
         return coords
@@ -520,11 +520,11 @@ class Sudoku(object):
         This is an internal function and should not be used
         outside of the sudoku module.
         """
-        grid_x = col - (col % self.width)
-        grid_y = row - (row % self.height)
+        grid_x = col - (col % self.box_width)
+        grid_y = row - (row % self.box_height)
 
         return [(grid_y + i, grid_x + j) for i, j in product(
-                range(self.height), range(self.width))
+                range(self.box_height), range(self.box_width))
                 if grid_y + i != row and grid_x + j != col]
 
     def equals(self, other, candidates=False):
@@ -607,16 +607,16 @@ def view(
             if length > max_field_length:
                 max_field_length = length
 
-    dash_count = sudoku.width + sudoku.width * max_field_length
+    dash_count = sudoku.box_width + sudoku.box_width * max_field_length
 
     rule = "-" * dash_count + "+"
-    for i in range(sudoku.height-2):
+    for i in range(sudoku.box_height - 2):
         rule += "-" * (dash_count + 1) + "+"
     rule += "-" * dash_count + "\n"
 
     s = ""
 
-    field_count = sudoku.width * sudoku.height
+    field_count = sudoku.box_width * sudoku.box_height
 
     for rc, row in enumerate(sudoku.indices):
         col_str = []
@@ -635,7 +635,7 @@ def view(
                 val = val.ljust(max_field_length)
 
             col_str.append(val)
-            if (cc + 1) % sudoku.width == 0 and cc < field_count - 1:
+            if (cc + 1) % sudoku.box_width == 0 and cc < field_count - 1:
                 col_str.append("|")
 
         s += " ".join(col_str)
@@ -643,6 +643,6 @@ def view(
         if rc < field_count - 1:
             s += "\n"
 
-        if (rc + 1) % sudoku.height == 0 and rc < field_count - 1:
+        if (rc + 1) % sudoku.box_height == 0 and rc < field_count - 1:
             s += rule
     return s

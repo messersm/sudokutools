@@ -79,7 +79,7 @@ class BasicTests(TestCase):
         self.examples = []
         for width, height in TEST_SIZES:
             count = (width ** 2 * height ** 2) // 2
-            self.examples.append(generate(min_count=count, size=(width, height)))
+            self.examples.append(generate(min_count=count, box_size=(width, height)))
 
     def test_simple(self):
         """Naked Singles/Tuples, Hidden Singles/Tuples and pointing pairs work.
@@ -121,7 +121,7 @@ class BasicTests(TestCase):
                 sudoku = example.copy()
                 for row, col in sudoku:
                     if sudoku[row, col]:
-                        sudoku[(row+1) % sudoku.height, col] = sudoku[row, col]
+                        sudoku[(row+1) % sudoku.box_height, col] = sudoku[row, col]
                         break
                 # make sure this has conflicts.
                 self.assertNotEqual(list(find_conflicts(sudoku)), [])

@@ -45,7 +45,7 @@ class ConflictTests(TestCase):
         """find_conflicts works with different sudoku sizes."""
 
         for size in TEST_SIZES:
-            sudoku = Sudoku(size=size)
+            sudoku = Sudoku(box_size=size)
             self.assertEqual(list(find_conflicts(sudoku)), [])
 
         for example, solution in SOLVE_EXAMPLES:

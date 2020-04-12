@@ -23,20 +23,21 @@ SYMMETRY = {
 }
 
 
-def create_solution(size=(3, 3)):
+def create_solution(box_size=(3, 3)):
     """Returns a sudoku, without empty or conflicting fields.
     
     Args:
-        size (int, int): box width and box height of the filled sudoku.
+        box_size (int, int): box width and box height of the filled sudoku.
+                             A standard 9x9 sudoku has box_size=(3, 3).
 
     Returns:
         Sudoku: The completely filled Sudoku instance.
     """
-    sudoku = Sudoku(size=size)
+    sudoku = Sudoku(box_size=box_size)
 
     # fill a single box and let dlx do the rest
-    row = choice(range(sudoku.height))
-    col = choice(range(sudoku.width))
+    row = choice(range(sudoku.box_height))
+    col = choice(range(sudoku.box_width))
     numbers = list(sudoku.numbers)
     shuffle(numbers)
 
@@ -46,7 +47,7 @@ def create_solution(size=(3, 3)):
     return next(dlx(sudoku))
 
 
-def generate(min_count=0, symmetry=None, size=(3, 3)):
+def generate(min_count=0, symmetry=None, box_size=(3, 3)):
     """Generate a sudoku and return it.
 
     Args:
@@ -59,8 +60,8 @@ def generate(min_count=0, symmetry=None, size=(3, 3)):
                          Possible values are: None (no symmetry),
                          "rotate-90", "rotate-180", "mirror-x", "mirror-y"
                          and "mirror-xy".
-        size (int, int): box_width and box_height of the filled sudoku.
-                         A standard 9x9 sudoku has size=(3, 3).
+        box_size (int, int): box_width and box_height of the filled sudoku.
+                         A standard 9x9 sudoku has box_size=(3, 3).
 
     Returns:
         Sudoku: The generated :class:`Sudoku` instance.
@@ -69,7 +70,7 @@ def generate(min_count=0, symmetry=None, size=(3, 3)):
         ValueError, if symmetry is not a valid argument.
         ValueError, if min_count is larger then len(sudoku).
     """
-    count_limit = size[0]**2 * size[1]**2
+    count_limit = box_size[0] ** 2 * box_size[1] ** 2
     if min_count > count_limit:
         raise ValueError("min_count must be <= %d (%d was given)." % (
             count_limit, min_count))
@@ -80,7 +81,7 @@ def generate(min_count=0, symmetry=None, size=(3, 3)):
         values = ", ".join([str(key) for key in SYMMETRY])
         raise ValueError("symmetry must be one of %s" % values)
 
-    solution = create_solution(size=size)
+    solution = create_solution(box_size=box_size)
     sudoku = solution.copy()
     coords = list(sudoku)
     shuffle(coords)
@@ -88,7 +89,7 @@ def generate(min_count=0, symmetry=None, size=(3, 3)):
 
     while coords:
         # get next coordinates to change
-        step_coords = set(symmetry_func(sudoku.width, sudoku.height, *coords[0]))
+        step_coords = set(symmetry_func(sudoku.box_width, sudoku.box_height, *coords[0]))
 
         for row, col in step_coords:
             coords.remove((row, col))
@@ -168,7 +169,7 @@ def generate_from_template(template, tries=100):
     t = 0
 
     while t < tries or tries < 0:
-        solution = create_solution(size=template.size)
+        solution = create_solution(box_size=template.box_size)
         sudoku = solution.copy()
 
         for row, col in template:

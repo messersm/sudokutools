@@ -139,7 +139,7 @@ class SudokuTests(TestCase):
     def test_init(self):
         """A new sudoku consists only of zeros and no candidates."""
         for width, height in TEST_SIZES:
-            sudoku = Sudoku(size=(width, height))
+            sudoku = Sudoku(box_size=(width, height))
             count = 0
             for row, col in sudoku:
                 count += 1
@@ -150,7 +150,7 @@ class SudokuTests(TestCase):
     def test_len(self):
         """A sudoku of size=(width, height) has width**2 * height**2 fields."""
         for width, height in TEST_SIZES:
-            sudoku = Sudoku(size=(width, height))
+            sudoku = Sudoku(box_size=(width, height))
             self.assertEqual(width**2 * height**2, len(sudoku))
 
     def test_decode_valid(self):
@@ -180,13 +180,13 @@ class SudokuTests(TestCase):
         """A sudoku of dimensions 4x4 is decoded correctly."""
         sudoku = Sudoku.decode(EXAMPLE_4)
         self.assertEqual(str(sudoku), EXAMPLE_4_STR)
-        self.assertEqual(sudoku.size, (2, 2))
+        self.assertEqual(sudoku.box_size, (2, 2))
 
     def test_decode_length_16(self):
         """A sudoku of dimensions 16x16 is decoded correctly."""
         sudoku = Sudoku.decode(EXAMPLE_16, number_sep=" ")
         self.assertEqual(str(sudoku), EXAMPLE_16_STR)
-        self.assertEqual(sudoku.size, (4, 4))
+        self.assertEqual(sudoku.box_size, (4, 4))
 
     def test_encode(self):
         """A sudoku is encoded to a valid string."""
@@ -298,7 +298,7 @@ class SudokuTests(TestCase):
     def test_iter(self):
         """Iterating through coordinates works."""
         for width, height in (3, 3), (2, 2), (4, 2):
-            sudoku = Sudoku(size=(width, height))
+            sudoku = Sudoku(box_size=(width, height))
 
             coords = sorted(product(range(width * height), repeat=2))
 
@@ -316,7 +316,7 @@ class CoordTests(TestCase):
     def test_row_of(self):
         """row_of() returns all fields of a row and no other."""
         for width, height in TEST_SIZES:
-            sudoku = Sudoku(size=(width, height))
+            sudoku = Sudoku(box_size=(width, height))
 
             for row, col in sudoku:
                 coords = sudoku.row_of(row, col, include=True)
@@ -332,7 +332,7 @@ class CoordTests(TestCase):
     def test_column_of(self):
         """column_of() returns all fields of a column and no other."""
         for width, height in TEST_SIZES:
-            sudoku = Sudoku(size=(width, height))
+            sudoku = Sudoku(box_size=(width, height))
 
             for row, col in sudoku:
                 coords = sudoku.column_of(row, col, include=True)
@@ -348,16 +348,16 @@ class CoordTests(TestCase):
     def test_region_of(self):
         """box_of() returns all fields of a square and no other."""
         for width, height in TEST_SIZES:
-            sudoku = Sudoku(size=(width, height))
+            sudoku = Sudoku(box_size=(width, height))
 
             for row, col in sudoku:
                 coords = sudoku.box_of(row, col, include=True)
                 self.assertEqual(len(coords), len(sudoku.numbers))
 
-                start_row = row - (row % sudoku.height)
-                start_col = col - (col % sudoku.width)
-                for i in range(sudoku.height):
-                    for j in range(sudoku.width):
+                start_row = row - (row % sudoku.box_height)
+                start_col = col - (col % sudoku.box_width)
+                for i in range(sudoku.box_height):
+                    for j in range(sudoku.box_width):
                         self.assertIn((start_row + i, start_col + j), coords)
 
                 coords = sudoku.box_of(row, col, include=False)
@@ -367,12 +367,12 @@ class CoordTests(TestCase):
     def test_surrounding_of(self):
         """surrounding_of() returns all surrounding fields and no other."""
         for width, height in TEST_SIZES:
-            sudoku = Sudoku(size=(width, height))
+            sudoku = Sudoku(box_size=(width, height))
 
             for row, col in sudoku:
                 coords = sudoku.surrounding_of(row, col, include=True)
-                count = 3 * sudoku.width * sudoku.height
-                count -= (sudoku.width + sudoku.height)
+                count = 3 * sudoku.box_width * sudoku.box_height
+                count -= (sudoku.box_width + sudoku.box_height)
                 self.assertEqual(len(coords), count, str((width, height)))
 
                 for i, j in sudoku.row_of(row, col, include=True):
@@ -389,7 +389,7 @@ class CoordTests(TestCase):
     def test_surrounding_of_examples(self):
         """surrounding_of() returns the right coords for a given example."""
         for (width, height), (row, col), coords in SURROUNDING_OF_EXAMPLES:
-            sudoku = Sudoku(size=(width, height))
+            sudoku = Sudoku(box_size=(width, height))
             self.assertEqual(
                 sorted(sudoku.surrounding_of(row, col)), sorted(coords))
 
@@ -397,12 +397,12 @@ class CoordTests(TestCase):
         """box_at() returns the correct box indices."""
 
         for width, height in TEST_SIZES:
-            sudoku = Sudoku(size=(width, height))
+            sudoku = Sudoku(box_size=(width, height))
             l = []
-            for i in range(sudoku.width):
-                for j in range(sudoku.height):
-                    for x in range(sudoku.height):
-                        l.extend([x + i * sudoku.height] * sudoku.width)
+            for i in range(sudoku.box_width):
+                for j in range(sudoku.box_height):
+                    for x in range(sudoku.box_height):
+                        l.extend([x + i * sudoku.box_height] * sudoku.box_width)
 
             boxes = [sudoku.box_at(r, c) for r, c in sudoku]
             self.assertEqual(l, boxes)
@@ -512,6 +512,6 @@ class ViewTests(TestCase):
         self.assertEqual(view(sudoku), EXAMPLE_16x16_VIEW)
 
     def test_2x3(self):
-        sudoku = Sudoku.decode(EXAMPLE_2x3, size=(2, 3))
+        sudoku = Sudoku.decode(EXAMPLE_2x3, box_size=(2, 3))
         init_candidates(sudoku)
         self.assertEqual(view(sudoku), EXAMPLE_2x3_VIEW)

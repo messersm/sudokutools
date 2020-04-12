@@ -55,7 +55,7 @@ class CreateSolutionTests(TestCase):
     def test_created_solution_is_complete_and_correct(self):
         """A created solution is complete and correct."""
         for width, height in TEST_SIZES:
-            sudoku = create_solution(size=(width, height))
+            sudoku = create_solution(box_size=(width, height))
             self.assertEqual(sudoku.count(), width**2 * height**2)
             self.assertEqual(list(find_conflicts(sudoku)), [])
 
@@ -65,7 +65,7 @@ class GenerateTests(TestCase):
         """A generated sudoku has no conflicts and is unique."""
         for width, height in TEST_SIZES:
             count = width ** 2 * height ** 2 // 2
-            sudoku = generate(min_count=count, size=(width, height))
+            sudoku = generate(min_count=count, box_size=(width, height))
             self.assertEqual(len(list(find_conflicts(sudoku))), 0)
             self.assertEqual(is_unique(sudoku), True)
 
@@ -73,7 +73,7 @@ class GenerateTests(TestCase):
         """A generated sudoku has no less than the number of fields we want."""
         for width, height in TEST_SIZES:
             count = width**2 * height**2 // 2
-            sudoku = generate(min_count=count, size=(width, height))
+            sudoku = generate(min_count=count, box_size=(width, height))
             self.assertGreaterEqual(sudoku.count(), count)
 
     def test_generate_invalid_min(self):
@@ -82,7 +82,7 @@ class GenerateTests(TestCase):
             max_count = width**2 * height**2
             self.assertRaises(
                 ValueError,
-                generate, min_count=max_count+1, size=(width, height))
+                generate, min_count=max_count+1, box_size=(width, height))
 
     def test_invalid_symmetry(self):
         """Generating a sudoku with invalid symmetry raises ValueError."""
@@ -114,9 +114,9 @@ class GenerateFromTemplateTests(TestCase):
         """A 16x16 template creates a correct 16x16 sudoku."""
         # TODO: This test seems to timeout on Travis sometimes.
         template = Sudoku.decode(TEMPLATE_16x16)
-        self.assertEqual(template.size, (4, 4))
+        self.assertEqual(template.box_size, (4, 4))
         sudoku = generate_from_template(template, tries=-1)
-        self.assertEqual(sudoku.size, (4, 4))
+        self.assertEqual(sudoku.box_size, (4, 4))
 
         for row, col in template:
             self.assertEqual(bool(template[row, col]), bool(sudoku[row, col]))
