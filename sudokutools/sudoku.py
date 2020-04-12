@@ -52,7 +52,8 @@ class Sudoku(object):
         """Create a new empty sudoku.
 
         Args:
-            size ((int, int)): box_width, box_height for the new sudoku.
+            size (int, int): box_width, box_height for the new sudoku.
+                             A standard 9x9 sudoku has size=(3, 3).
         """
         try:
             self.size = tuple(size)

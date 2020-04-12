@@ -55,11 +55,12 @@ def generate(min_count=0, symmetry=None, size=(3, 3)):
                          Any number below 17 makes no sense (but will not
                          cause an error), since unique sudokus must have
                          at least 17 filled fields.
-        symmetry (str): The kind of symmetry that will be created.
-                        Possible values are: None (no symmetry),
-                        "rotate-90", "rotate-180", "mirror-x", "mirror-y"
-                        and "mirror-xy".
-        size (int, int): region_width and region_height of the filled sudoku.
+        symmetry (str):  The kind of symmetry that will be created.
+                         Possible values are: None (no symmetry),
+                         "rotate-90", "rotate-180", "mirror-x", "mirror-y"
+                         and "mirror-xy".
+        size (int, int): box_width and box_height of the filled sudoku.
+                         A standard 9x9 sudoku has size=(3, 3).
 
     Returns:
         Sudoku: The generated :class:`Sudoku` instance.
