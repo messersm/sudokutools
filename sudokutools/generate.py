@@ -4,6 +4,16 @@ Functions defined here:
  * create_solution(): Create a complete sudoku without conflicts.
  * generate(): Create a new sudoku.
  * generate_from_template(): Create a new sudoku given a template pattern.
+
+Warning:
+    Since the functions in this module work using recursion,
+    generating very large Sudokus will likely
+    To be more precise: Python will raise an RecursionError,
+    if ``box_width * box_height >= sys.getrecursionlimit()``.
+
+    If you really want to generate Sudokus of this size using sudokutools,
+    you have to increase the recursion limit of Python. See:
+    https://stackoverflow.com/questions/3323001/what-is-the-maximum-recursion-depth-in-python-and-how-to-increase-it
 """
 
 from collections import defaultdict

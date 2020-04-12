@@ -5,6 +5,16 @@ Functions defined here:
  * dlx(): Solves a sudoku using the dancing links algorithm-X.
  * calc_candidates(): Calculates candidates of a field in a sudoku.
  * init_candidates(): Sets the candidates for all fields in a sudoku.
+
+Warning:
+    Since the functions in this module work using recursion,
+    solving very large Sudokus will likely
+    To be more precise: Python will raise an RecursionError,
+    if ``box_width * box_height >= sys.getrecursionlimit()``.
+
+    If you really want to generate Sudokus of this size using sudokutools,
+    you have to increase the recursion limit of Python. See:
+    https://stackoverflow.com/questions/3323001/what-is-the-maximum-recursion-depth-in-python-and-how-to-increase-it
 """
 
 from sudokutools.dlx import do_dlx
